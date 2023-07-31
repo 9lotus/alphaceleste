@@ -12,8 +12,6 @@ Celeste = CelesteEnvironment()
 terminated = False
 while not terminated:
     action = Celeste.get_playerinput()
-    Celeste.get_playeraction(action)
-    Celeste.maddy_update()
     Celeste.render()
-    terminated = Celeste.step()
+    terminated = Celeste.step(action)
 Celeste.close()
