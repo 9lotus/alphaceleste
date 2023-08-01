@@ -8,14 +8,11 @@ Description : Contains the CelesteEnvironment class and all of its functionality
 import pygame, sys
 from pygame import *
 
-screendims = (640, 360)
-gravity = 9.8
-maxv = 1.5
 block = pygame.image.load('art/Tile_White.png')
 spikes = pygame.image.load('art/Tile_Spikes.png')
 ledge = pygame.image.load('art/Tile_Ledge.png')
 maddy = pygame.image.load('art/Hitbox_Maddy.png')
-tilesize = 8
+tilesize = block.get_height()
 gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
@@ -39,7 +36,13 @@ gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
            ['1','0','0','0','0','0','0','0','1','1','1','1','1','1','2','2','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','3','3','3','1','1','1','1','1','1','1','1','1','1','1','1','2','2','2','2','2','2','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',]]
+screendims = (640, 360)
 dis = display.set_mode(screendims)
+jumpmax_y = 3 * tilesize
+jumpmax_x = 6 * tilesize
+maxv_x = 1.5
+maxv_y = 5
+gravity = (2 * jumpmax_y * maxv_y * maxv_y) / (jumpmax_x * jumpmax_x)
 
 class CelesteEnvironment:
 
@@ -57,18 +60,37 @@ class CelesteEnvironment:
         self.maddy_xvelocity = 0
         self.maddy_yvelocity = 0
         self.maddy_yaccel = 0
-        self.dash = 1
-        self.airtimer = 0
+        self.movingright = False
+        self.movingleft = False
+        self.hasdash = True
+        self.inair = False
+        self.isclimbing = False
+        self.pastjumppeak = False
+        self.stamina_max = 110
         self.tilerects = []
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
 
     #Updates time, updates game
     def step(self, action):
-        self.get_playeraction(action)
         self.maddy_update()
+        self.get_playeraction(action)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                  return True
+            if event.type == KEYDOWN:
+                if event.key == K_c:
+                    self.jump()
+                if event.key == K_RIGHT:
+                    self.movingright = True
+                if event.key == K_LEFT:
+                    self.movingleft = True
+            if event.type == KEYUP:
+                if event.key == K_RIGHT:
+                    self.movingright = False
+                if event.key == K_LEFT:
+                    self.movingleft = False
+                if event.key == K_z:
+                    self.isclimbing = False
         self.dt = self.clock.tick(60)/1000
         return False
 
@@ -77,12 +99,32 @@ class CelesteEnvironment:
         self.move_collision()
         self.maddy_rect.x = self.maddy_pos[0]
         self.maddy_rect.y = self.maddy_pos[1]
-        if self.collisiontypes['bottom']:
-            #self.maddy_yaccel = 0
-            self.airtimer = 0
+        if self.maddy_yvelocity > 0:
+            self.pastjumppeak = True
         else:
-            self.maddy_yvelocity += gravity * self.dt
-            self.airtimer += 1
+            self.pastjumppeak = False
+        if self.collisiontypes['bottom']:
+            self.inair = False
+        elif not self.isclimbing:
+            if self.pastjumppeak:
+                self.maddy_yvelocity += gravity * 16 * self.dt 
+            else:
+                self.maddy_yvelocity += gravity * 19.2 * self.dt
+            self.inair = True
+
+    def jump(self):
+        if not(self.inair):
+            self.maddy_yvelocity = 0
+            self.maddy_yvelocity -= 1.2 * jumpmax_y * (maxv_y / (jumpmax_x))
+        #add walljumping and neutrals
+        """
+        elif self.collisiontypes['right']:
+            self.maddy_yvelocity = 0
+            self.maddy_yvelocity -= 1.6 * jumpmax_y * (maxv_y / (jumpmax_x))
+        elif self.collisiontypes['left']:
+            self.maddy_yvelocity = 0
+            self.maddy_yvelocity -= 1.6 * jumpmax_y * (maxv_y / (jumpmax_x))
+        """
 
     #Returns a list of all object collisions
     def collision(self):
@@ -141,21 +183,31 @@ class CelesteEnvironment:
         dis.blit(surf, (0, 0))
         pygame.display.flip()
 
-    #Dictates the actions of the player
+    #Dictates the actions of the player 
     def get_playeraction(self, action):
-        #if action[pygame.K_UP]:
-                #if self.airtimer < 6:
-                    #self.maddy_yaccel = -1
-        if not(action[pygame.K_RIGHT] and action[pygame.K_LEFT]):
-            if action[pygame.K_RIGHT]:
-                self.maddy_xvelocity = maxv
-            elif action[pygame.K_LEFT]:
-                self.maddy_xvelocity = -maxv
+        if action[pygame.K_z]:
+            print(self.collisiontypes)
+            if self.collisiontypes['left'] or self.collisiontypes['right']:
+                self.isclimbing = True
+        if self.isclimbing:
+            if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
+                if action[pygame.K_UP]:
+                    self.maddy_yvelocity = -1
+                elif action[pygame.K_DOWN]:
+                    self.maddy_yvelocity = 1
+                else:
+                    self.maddy_yvelocity = 0
+            else:
+                self.maddy_yvelocity = 0
+        if not(self.movingleft and self.movingright):
+            if self.movingright:
+                self.maddy_xvelocity = maxv_x
+            elif self.movingleft:
+                self.maddy_xvelocity = -maxv_x
             else:
                 self.maddy_xvelocity = 0
         else:
             self.maddy_xvelocity = 0
-        
 
     #Quits the game
     @staticmethod
