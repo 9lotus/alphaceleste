@@ -59,7 +59,6 @@ class CelesteEnvironment:
         self.maddy_pos = [self.maddy_rect.x, self.maddy_rect.y]
         self.maddy_xvelocity = 0
         self.maddy_yvelocity = 0
-        self.maddy_yaccel = 0
         self.movingright = False
         self.movingleft = False
         self.hasdash = True
@@ -70,7 +69,7 @@ class CelesteEnvironment:
         self.tilerects = []
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
 
-    #Updates time, updates game
+    #Updates game
     def step(self, action):
         self.maddy_update()
         self.get_playeraction(action)
@@ -99,32 +98,38 @@ class CelesteEnvironment:
         self.move_collision()
         self.maddy_rect.x = self.maddy_pos[0]
         self.maddy_rect.y = self.maddy_pos[1]
+        self.check_jump()
+        self.check_fallstate()
+
+    #Checks if a jump is past its peak
+    def check_jump(self):
         if self.maddy_yvelocity > 0:
             self.pastjumppeak = True
         else:
             self.pastjumppeak = False
+
+    #Checks to see if Madeline is in the air
+    def check_fallstate(self):
         if self.collisiontypes['bottom']:
             self.inair = False
         elif not self.isclimbing:
-            if self.pastjumppeak:
-                self.maddy_yvelocity += gravity * 16 * self.dt 
-            else:
-                self.maddy_yvelocity += gravity * 19.2 * self.dt
+            self.add_gravity()
             self.inair = True
+    
+    #Implements gravity
+    def add_gravity(self):
+        if self.pastjumppeak:
+            self.maddy_yvelocity += gravity * 16 * self.dt 
+        else:
+            self.maddy_yvelocity += gravity * 19.2 * self.dt
+        if self.maddy_yvelocity > 2.4:
+            self.maddy_yvelocity = 2.4
 
+    #Jump mechanics
     def jump(self):
         if not(self.inair):
             self.maddy_yvelocity = 0
             self.maddy_yvelocity -= 1.2 * jumpmax_y * (maxv_y / (jumpmax_x))
-        #add walljumping and neutrals
-        """
-        elif self.collisiontypes['right']:
-            self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= 1.6 * jumpmax_y * (maxv_y / (jumpmax_x))
-        elif self.collisiontypes['left']:
-            self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= 1.6 * jumpmax_y * (maxv_y / (jumpmax_x))
-        """
 
     #Returns a list of all object collisions
     def collision(self):
@@ -134,7 +139,7 @@ class CelesteEnvironment:
                 collisionlist.append(tile)
         return collisionlist
 
-    #Adjusts Maddy's position to represent collisions
+    #Implements collisions
     def move_collision(self):
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
         self.maddy_rect.x += self.maddy_xvelocity
@@ -163,8 +168,15 @@ class CelesteEnvironment:
     #Renders all visuals
     def render(self):
         self.screen.fill("black")
-        self.y = 0
+        self.render_gamemap()
         self.screen.blit(maddy, (self.maddy_pos[0], self.maddy_pos[1]))
+        surf = pygame.transform.scale(self.screen, (640, 360))
+        dis.blit(surf, (0, 0))
+        pygame.display.flip()
+
+    #Renders the game map
+    def render_gamemap(self):
+        self.y = 0
         self.tilerects = []
         for row in gamemap:
             self.x = 0
@@ -179,16 +191,19 @@ class CelesteEnvironment:
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
                 self.x += 1
             self.y += 1 
-        surf = pygame.transform.scale(self.screen, (640, 360))
-        dis.blit(surf, (0, 0))
-        pygame.display.flip()
 
-    #Dictates the actions of the player 
+    #Performs player actions
     def get_playeraction(self, action):
+        self.move_climb(action)
+        self.move_leftright(action)
+
+    #Assigns climbing movement
+    def move_climb(self, action):
         if action[pygame.K_z]:
-            print(self.collisiontypes)
             if self.collisiontypes['left'] or self.collisiontypes['right']:
                 self.isclimbing = True
+            else:
+                self.isclimbing = False
         if self.isclimbing:
             if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
                 if action[pygame.K_UP]:
@@ -199,6 +214,9 @@ class CelesteEnvironment:
                     self.maddy_yvelocity = 0
             else:
                 self.maddy_yvelocity = 0
+
+    #Assigns left-right movement
+    def move_leftright(self, action):
         if not(self.movingleft and self.movingright):
             if self.movingright:
                 self.maddy_xvelocity = maxv_x
