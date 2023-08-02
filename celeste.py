@@ -346,10 +346,11 @@ class CelesteEnvironment:
         if self.isgrabbing:
             if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
                 if action[pygame.K_UP]:
-                    self.maddy_yvelocity = -1
+                    self.maddy_yvelocity = -.8
                     self.isclimbingup = True
                 elif action[pygame.K_DOWN]:
-                    self.maddy_yvelocity = 1
+                    self.maddy_yvelocity = 1.4
+                    self.isclimbingup = False
                 else:
                     self.maddy_yvelocity = 0
                     self.isclimbingup = False
