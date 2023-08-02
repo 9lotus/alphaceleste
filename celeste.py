@@ -126,7 +126,6 @@ class CelesteEnvironment:
         self.check_dash()
         self.check_fallstate()
         self.update_stamina()
-        print(self.stamina)
 
     #Checks if a jump is past its peak
     def check_jump(self):
@@ -371,6 +370,7 @@ class CelesteEnvironment:
                 self.isfacing = "False"
                 self.maddy_xvelocity = 0
 
+    #Assigns looking up and down
     def move_look(self, action):
         if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
             if action[pygame.K_UP]:
@@ -380,6 +380,7 @@ class CelesteEnvironment:
             else:
                 self.islooking = "False"
 
+    #Assigns dash directions
     def move_dash(self, action):
         directions = []
         if action[pygame.K_RIGHT]:
