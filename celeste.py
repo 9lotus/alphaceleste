@@ -150,7 +150,8 @@ class CelesteEnvironment:
             self.stamina = stamina_max
             self.istired = False
             self.cangrab = True
-            self.hasdash = True
+            if not self.isdashing:
+                self.hasdash = True
         elif not self.isgrabbing and not self.isdashing:
             self.add_gravity()
             self.inair = True
