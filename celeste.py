@@ -282,7 +282,7 @@ class CelesteEnvironment:
             elif self.maddy_yvelocity < 0:
                 self.maddy_rect.top = self.maddy_pos[1] = tile.bottom
                 self.collisiontypes['top'] = True
-                self.maddy_yvelocity = 0
+                self.maddy_yvelocity = 0   
         
     #Renders all visuals
     def render(self):
@@ -359,7 +359,7 @@ class CelesteEnvironment:
 
     #Assigns left-right movement
     def move_leftright(self):
-        if not self.isdashing:
+        if not self.isdashing and not self.isgrabbing:
             if not(self.movingleft and self.movingright):
                 if self.movingright:
                     self.maddy_xvelocity = maxv_x
