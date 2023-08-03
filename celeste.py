@@ -6,7 +6,7 @@ Date : 7/27/23
 Description : Contains the CelesteEnvironment class and all of its functionality
 """
 import math
-dashspeed = 2.8
+dashspeed = 3.4
 diagonaldashspeed = math.sqrt(dashspeed)
 
 import pygame, sys
@@ -53,7 +53,7 @@ gravity = (2 * jumpmax_y * maxv_y * maxv_y) / (jumpmax_x * jumpmax_x)
 stamina_max = 110
 maxfall = 2.3
 levelstartpos = (16, 156)
-dashtime = .3
+dashtime = .25
 
 class CelesteEnvironment:
 
@@ -71,6 +71,8 @@ class CelesteEnvironment:
         self.maddy_xvelocity = 0
         self.maddy_yvelocity = 0
         self.flashingcounter = 0
+        self.dashbuffer = 4
+        self.dashcountdown = False
         self.movingright = False
         self.movingleft = False
         self.hasdash = True
@@ -91,7 +93,7 @@ class CelesteEnvironment:
 
     #Updates game
     def step(self, action):
-        self.maddy_update()
+        self.maddy_update(action)
         self.get_playeraction(action)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -100,7 +102,7 @@ class CelesteEnvironment:
                 if event.key == K_c:
                     self.jump()
                 if event.key == K_x:
-                    self.move_dash(action)
+                    self.dashcountdown = True
                 if event.key == K_RIGHT:
                     self.movingright = True
                 if event.key == K_LEFT:
@@ -118,14 +120,15 @@ class CelesteEnvironment:
         return False
 
     #Updates madeline's position
-    def maddy_update(self):
+    def maddy_update(self, action):
         self.move_collision()
         self.maddy_rect.x = self.maddy_pos[0]
         self.maddy_rect.y = self.maddy_pos[1]
         self.check_jump()
-        self.check_dash()
+        self.check_dash(action)
         self.check_fallstate()
         self.update_stamina()
+        #print(self.maddy_yvelocity)
 
     #Checks if a jump is past its peak
     def check_jump(self):
@@ -135,13 +138,22 @@ class CelesteEnvironment:
             self.pastjumppeak = False
 
     #Checks if Madeline is dashing
-    def check_dash(self):
+    def check_dash(self, action):
+        if self.dashcountdown:
+            self.dashbuffer -= 1
+            if self.dashbuffer == 0:
+                self.move_dash(action)
+                self.dashbuffer = 4
+                self.dashcountdown = False
         if self.isdashing and self.dashtimer > 0:
             self.dash()
             self.dashtimer -= self.dt
-        else:
+        elif self.isdashing:
             self.dashtimer = dashtime
             self.isdashing = False
+            if self.maddy_yvelocity < 0:
+                self.maddy_yvelocity = -.5
+            self.maddy_xvelocity = 0
 
     #Checks to see if Madeline is in the air
     def check_fallstate(self):
