@@ -95,12 +95,6 @@ class CelesteEnvironment:
     def step(self, action):
         self.maddy_update(action)
         self.get_playeraction(action)
-        self.event_loop()
-        self.dt = self.clock.tick(60)/1000
-        return False
-
-    #Runs quit and key events
-    def event_loop(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                  return True
@@ -122,6 +116,8 @@ class CelesteEnvironment:
                     self.movingleft = False
                 if event.key == K_z:
                     self.isgrabbing = False
+        self.dt = self.clock.tick(60)/1000
+        return False
 
     #Updates madeline's position
     def maddy_update(self, action):
@@ -197,9 +193,11 @@ class CelesteEnvironment:
 
     #Jump mechanics
     def jump(self):
-        if not(self.inair):
+        if not self.inair and not self.isgrabbing:
             self.maddy_yvelocity = 0
             self.maddy_yvelocity -= 1.1 * jumpmax_y * (maxv_y / (jumpmax_x))
+        elif self.isgrabbing:
+            self.maddy_yvelocity -= 1.1 * jumpmax_y * (maxv_y / (jumpmax_x)) 
 
     #Dash mechanics
     def dash(self):
