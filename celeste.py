@@ -89,7 +89,10 @@ class CelesteEnvironment:
         self.dashtimer = dashtime
         self.flashingcounter = 0
         self.tilerects = []
+        self.spikerects = []
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
+        self.isdead = False
+        self.deathcount = 0
 
     #Updates game
     def step(self, action):
@@ -119,6 +122,11 @@ class CelesteEnvironment:
         self.dt = self.clock.tick(60)/1000
         return False
 
+    def check_spike_collision(self):
+        for tile_rect in self.spikerects:
+            if tile_rect.colliderect(self.maddy_rect):
+                self.isdead = True
+            
     #Updates madeline's position
     def maddy_update(self, action):
         self.move_collision()
@@ -128,6 +136,18 @@ class CelesteEnvironment:
         self.check_dash(action)
         self.check_fallstate()
         self.update_stamina()
+
+        self.check_spike_collision()
+        if self.isdead:
+            self.ondeath()
+
+    def ondeath(self):
+        self.deathcount += 1
+        self.maddy_pos[0] = levelstartpos[0]
+        self.maddy_pos[1] = levelstartpos[1]
+        self.maddy_rect.x = self.maddy_pos[0]
+        self.maddy_rect.y = self.maddy_pos[1]
+        self.isdead = False
 
     #Checks if a jump is past its peak
     def check_jump(self):
@@ -277,6 +297,7 @@ class CelesteEnvironment:
         self.maddy_rect.x += self.maddy_xvelocity
         self.maddy_pos[0] += self.maddy_xvelocity
         collisions = self.collision()
+        self.check_spike_collision()
         for tile in collisions:
             if self.maddy_xvelocity > 0:
                 self.maddy_rect.right = self.maddy_pos[0] = tile.left
@@ -288,6 +309,7 @@ class CelesteEnvironment:
         self.maddy_rect.y += self.maddy_yvelocity
         self.maddy_pos[1] += self.maddy_yvelocity
         collisions = self.collision()
+        self.check_spike_collision()
         for tile in collisions:
             if self.maddy_yvelocity > 0:
                 self.maddy_rect.bottom = self.maddy_pos[1] = tile.top
@@ -337,9 +359,9 @@ class CelesteEnvironment:
                 elif tile == '3':
                     self.screen.blit(ledge, (self.x*tilesize, self.y*tilesize))
                 if tile == '2':
-                    self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize + 2, tilesize, tilesize - 2))
+                    self.spikerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize + 5, tilesize, tilesize - 5))
                 elif tile == '3':
-                    self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize - 5)) 
+                    self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize)) 
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
                 self.x += 1
