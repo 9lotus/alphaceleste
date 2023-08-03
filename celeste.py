@@ -174,9 +174,9 @@ class CelesteEnvironment:
     #Implements gravity
     def add_gravity(self):
         if self.pastjumppeak:
-            self.maddy_yvelocity += gravity * 16 * self.dt 
+            self.maddy_yvelocity += gravity * 14 * self.dt 
         else:
-            self.maddy_yvelocity += gravity * 19.2 * self.dt
+            self.maddy_yvelocity += gravity * 16.8 * self.dt
         if self.maddy_yvelocity > maxfall:
             self.maddy_yvelocity = maxfall
 
@@ -184,7 +184,7 @@ class CelesteEnvironment:
     def jump(self):
         if not(self.inair):
             self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= 1.2 * jumpmax_y * (maxv_y / (jumpmax_x))
+            self.maddy_yvelocity -= 1.1 * jumpmax_y * (maxv_y / (jumpmax_x))
 
     #Dash mechanics
     def dash(self):
