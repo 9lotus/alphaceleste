@@ -12,14 +12,18 @@ diagonaldashspeed = math.sqrt(dashspeed)
 import pygame, sys
 from pygame import *
 
+#Screen
+screendims = (640, 360)
+dis = display.set_mode(screendims)
+
 #Visuals
-block = pygame.image.load('art/Tile_White.png')
-spikes = pygame.image.load('art/Tile_Spikes.png')
-ledge = pygame.image.load('art/Tile_Ledge.png')
-maddy = pygame.image.load('art/Maddy_Body.png')
-maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png')
-maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png')
-maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png')
+block = pygame.image.load('art/Tile_White.png').convert_alpha()
+spikes = pygame.image.load('art/Tile_Spikes.png').convert_alpha()
+ledge = pygame.image.load('art/Tile_Ledge.png').convert_alpha()
+maddy = pygame.image.load('art/Maddy_Body.png').convert_alpha()
+maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
+maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
+maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png').convert_alpha()
 tilesize = block.get_height()
 gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
@@ -44,8 +48,6 @@ gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
            ['1','0','0','0','0','0','0','0','1','1','1','1','1','1','2','2','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','3','3','3','1','1','1','1','1','1','1','1','1','1','1','1','2','2','2','2','2','2','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',]]
-screendims = (640, 360)
-dis = display.set_mode(screendims)
 
 #Gravity
 jumpmax_y = 3 * tilesize
@@ -162,6 +164,7 @@ class CelesteEnvironment:
         self.check_fallstate()
         self.update_stamina()
         self.check_spike_collision()
+        print(self.dt)
         if self.isdead:
             self.ondeath()
 
