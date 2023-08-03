@@ -70,24 +70,24 @@ class CelesteEnvironment:
         self.maddy_pos = [self.maddy_rect.x, self.maddy_rect.y]
         self.maddy_xvelocity = 0
         self.maddy_yvelocity = 0
-        self.flashingcounter = 0
-        self.dashbuffer = 4
-        self.dashcountdown = False
         self.movingright = False
         self.movingleft = False
-        self.hasdash = True
+        self.dashbuffer = 4
+        self.dashcountdown = False
         self.inair = False
+        self.istired = False
+        self.cangrab = True
         self.isclimbingup = False
         self.isgrabbing = False
         self.pastjumppeak = False
+        self.hasdash = True
         self.isdashing = False
-        self.istired = False
-        self.cangrab = True
         self.dashdirection = ""
         self.isfacing = ""
         self.islooking = ""
         self.stamina = stamina_max
         self.dashtimer = dashtime
+        self.flashingcounter = 0
         self.tilerects = []
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
 
@@ -95,6 +95,12 @@ class CelesteEnvironment:
     def step(self, action):
         self.maddy_update(action)
         self.get_playeraction(action)
+        self.event_loop()
+        self.dt = self.clock.tick(60)/1000
+        return False
+
+    #Runs quit and key events
+    def event_loop(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                  return True
@@ -116,8 +122,6 @@ class CelesteEnvironment:
                     self.movingleft = False
                 if event.key == K_z:
                     self.isgrabbing = False
-        self.dt = self.clock.tick(60)/1000
-        return False
 
     #Updates madeline's position
     def maddy_update(self, action):
@@ -128,7 +132,6 @@ class CelesteEnvironment:
         self.check_dash(action)
         self.check_fallstate()
         self.update_stamina()
-        #print(self.maddy_yvelocity)
 
     #Checks if a jump is past its peak
     def check_jump(self):
@@ -300,6 +303,14 @@ class CelesteEnvironment:
     #Renders all visuals
     def render(self):
         self.screen.fill("black")
+        self.render_maddy()
+        self.render_gamemap()
+        surf = pygame.transform.scale(self.screen, (640, 360))
+        dis.blit(surf, (0, 0))
+        pygame.display.flip()
+
+    #Renders Madeline
+    def render_maddy(self):
         if self.istired:
             if self.flashingcounter == 0:
                 self.screen.blit(maddy_tired, (self.maddy_pos[0], self.maddy_pos[1]))
@@ -313,10 +324,6 @@ class CelesteEnvironment:
             self.screen.blit(maddy_hair_red, (self.maddy_pos[0], self.maddy_pos[1] - 3))
         else:
             self.screen.blit(maddy_hair_blue, (self.maddy_pos[0], self.maddy_pos[1] - 3))
-        self.render_gamemap()
-        surf = pygame.transform.scale(self.screen, (640, 360))
-        dis.blit(surf, (0, 0))
-        pygame.display.flip()
 
     #Renders the game map
     def render_gamemap(self):
