@@ -12,13 +12,18 @@ diagonaldashspeed = math.sqrt(dashspeed)
 import pygame, sys
 from pygame import *
 
-block = pygame.image.load('art/Tile_White.png')
-spikes = pygame.image.load('art/Tile_Spikes.png')
-ledge = pygame.image.load('art/Tile_Ledge.png')
-maddy = pygame.image.load('art/Maddy_Body.png')
-maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png')
-maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png')
-maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png')
+#Screen
+screendims = (640, 360)
+dis = display.set_mode(screendims)
+
+#Visuals
+block = pygame.image.load('art/Tile_White.png').convert_alpha()
+spikes = pygame.image.load('art/Tile_Spikes.png').convert_alpha()
+ledge = pygame.image.load('art/Tile_Ledge.png').convert_alpha()
+maddy = pygame.image.load('art/Maddy_Body.png').convert_alpha()
+maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
+maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
+maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png').convert_alpha()
 tilesize = block.get_height()
 gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
@@ -43,51 +48,80 @@ gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
            ['1','0','0','0','0','0','0','0','1','1','1','1','1','1','2','2','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','3','3','3','1','1','1','1','1','1','1','1','1','1','1','1','2','2','2','2','2','2','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',]]
-screendims = (640, 360)
-dis = display.set_mode(screendims)
+
+#Gravity
 jumpmax_y = 3 * tilesize
 jumpmax_x = 6 * tilesize
 maxv_x = 1.5
 maxv_y = 5
 gravity = (2 * jumpmax_y * maxv_y * maxv_y) / (jumpmax_x * jumpmax_x)
+
+#Parameters
 stamina_max = 110
 maxfall = 2.3
-levelstartpos = (16, 156)
 dashtime = .25
+levelstartpos = (16, 156)
+spikeson = False
 
 class CelesteEnvironment:
 
     #Initializes the CelesteEnvironment class
     def __init__(self):
+
+        #Setup
         pygame.init()
         pygame.display.set_caption("Celeste")
         self.screen = pygame.Surface((320, 180))
+
+        #Time
         self.clock = pygame.time.Clock()
         self.dt = 0
+
+        #Coordinates
         self.x = 0
         self.y = 0
+
+        #Maddy hitbox
         self.maddy_rect = pygame.Rect(levelstartpos[0], levelstartpos[1], maddy.get_width(), maddy.get_height())
+        
+        #Maddy's true position
         self.maddy_pos = [self.maddy_rect.x, self.maddy_rect.y]
+
+        #Vertical and horizontal movement
         self.maddy_xvelocity = 0
         self.maddy_yvelocity = 0
         self.movingright = False
         self.movingleft = False
-        self.dashbuffer = 4
-        self.dashcountdown = False
+
+        #Jumping
+        self.pastjumppeak = False
         self.inair = False
+
+        #Climbing
         self.istired = False
         self.cangrab = True
         self.isclimbingup = False
         self.isgrabbing = False
-        self.pastjumppeak = False
+        self.stamina = stamina_max
+        self.flashingcounter = 0
+
+        #Dashing
+        self.dashbuffer = 4
+        self.dashcountdown = False
         self.hasdash = True
         self.isdashing = False
         self.dashdirection = ""
+        self.dashtimer = dashtime
+
+        #Directional input
         self.isfacing = ""
         self.islooking = ""
-        self.stamina = stamina_max
-        self.dashtimer = dashtime
-        self.flashingcounter = 0
+
+        #Death
+        self.isdead = False
+        self.deathcount = 0
+        
+        #Collisions
         self.tilerects = []
         self.spikerects = []
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
@@ -122,11 +156,6 @@ class CelesteEnvironment:
                     self.isgrabbing = False
         self.dt = self.clock.tick(60)/1000
         return False
-
-    def check_spike_collision(self):
-        for tile_rect in self.spikerects:
-            if tile_rect.colliderect(self.maddy_rect):
-                self.isdead = True
             
     #Updates madeline's position
     def maddy_update(self, action):
@@ -137,11 +166,11 @@ class CelesteEnvironment:
         self.check_dash(action)
         self.check_fallstate()
         self.update_stamina()
-
         self.check_spike_collision()
         if self.isdead:
             self.ondeath()
 
+    #Resets Madeline's position upon death
     def ondeath(self):
         self.deathcount += 1
         self.maddy_pos[0] = levelstartpos[0]
@@ -187,6 +216,13 @@ class CelesteEnvironment:
         elif not self.isgrabbing and not self.isdashing:
             self.add_gravity()
             self.inair = True
+
+    #Checks to see if madeline is colliding with spikes
+    def check_spike_collision(self):
+        for tile_rect in self.spikerects:
+            if tile_rect.colliderect(self.maddy_rect):
+                if spikeson:
+                    self.isdead = True
 
     #Updates stamina
     def update_stamina(self):
