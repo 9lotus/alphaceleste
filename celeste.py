@@ -395,6 +395,9 @@ class CelesteEnvironment:
     #Renders the game map
     def render_gamemap(self):
         self.y = 0
+        self.tilerects = []
+        self.spikerects = []
+        self.ledgerects = []
         for row in gamemap:
             self.x = 0
             for tile in row:
