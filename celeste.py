@@ -20,6 +20,7 @@ dis = display.set_mode(screendims)
 block = pygame.image.load('art/Tile_White.png').convert_alpha()
 spikes = pygame.image.load('art/Tile_Spikes.png').convert_alpha()
 ledge = pygame.image.load('art/Tile_Ledge.png').convert_alpha()
+dashcrystal = pygame.image.load('art/Tile_Dashcrystal.png').convert_alpha()
 maddy = pygame.image.load('art/Maddy_Body.png').convert_alpha()
 maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
 maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
@@ -33,7 +34,7 @@ gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
            ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','2','2','2','2','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['1','1','1','1','1','0','0','0','0','0','2','2','2','2','2','2','0','0','0','0','1','1','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
+           ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','4','0','0','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
            ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1',],
            ['1','1','1','1','1','1','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1',],
@@ -397,10 +398,11 @@ class CelesteEnvironment:
                     self.screen.blit(spikes, (self.x*tilesize, self.y*tilesize))
                 elif tile == '3':
                     self.screen.blit(ledge, (self.x*tilesize, self.y*tilesize))
+                elif tile == '4':
+                    self.screen.blit(dashcrystal, (self.x*tilesize, self.y*tilesize + 2))
                 if tile == '2':
                     self.spikerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize + 5, tilesize, tilesize - 5))
                 elif tile == '3':
-                    #self.screen.blit(ledge, (self.x * tilesize, self.y * tilesize))
                     self.ledgerects.append(pygame.Rect(self.x * tilesize, self.y * tilesize, tilesize, tilesize))
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
