@@ -164,7 +164,6 @@ class CelesteEnvironment:
         self.check_fallstate()
         self.update_stamina()
         self.check_spike_collision()
-        print(self.dt)
         if self.isdead:
             self.ondeath()
 
