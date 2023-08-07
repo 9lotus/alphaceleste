@@ -125,6 +125,9 @@ class CelesteEnvironment:
         self.tilerects = []
         self.spikerects = []
         self.collisiontypes = {'top': False, 'bottom': False, 'right': False, 'left': False}
+        self.isdead = False
+        self.deathcount = 0
+        self.ledgerects = []
 
     #Updates game
     def step(self, action):
@@ -353,7 +356,8 @@ class CelesteEnvironment:
                 self.maddy_rect.top = self.maddy_pos[1] = tile.bottom
                 self.collisiontypes['top'] = True
                 self.maddy_yvelocity = 0   
-        
+        self.check_ledge_collision()
+
     #Renders all visuals
     def render(self):
         self.screen.fill("black")
@@ -383,6 +387,7 @@ class CelesteEnvironment:
     def render_gamemap(self):
         self.y = 0
         self.tilerects = []
+        self.ledgerects = []
         for row in gamemap:
             self.x = 0
             for tile in row:
@@ -395,11 +400,20 @@ class CelesteEnvironment:
                 if tile == '2':
                     self.spikerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize + 5, tilesize, tilesize - 5))
                 elif tile == '3':
-                    self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize)) 
+                    #self.screen.blit(ledge, (self.x * tilesize, self.y * tilesize))
+                    self.ledgerects.append(pygame.Rect(self.x * tilesize, self.y * tilesize, tilesize, tilesize))
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
                 self.x += 1
             self.y += 1 
+
+    def check_ledge_collision(self):
+        for ledge_rect in self.ledgerects:
+            if ledge_rect.colliderect(self.maddy_rect) and self.maddy_yvelocity > 0:
+                self.maddy_rect.bottom = self.maddy_pos[1] = ledge_rect.top
+                self.maddy_pos[1] -=maddy.get_height()
+                self.collisiontypes['bottom'] = True
+                #self.maddy_yvelocity = 0
 
     #Performs player actions
     def get_playeraction(self, action):
