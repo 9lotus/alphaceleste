@@ -21,6 +21,7 @@ block = pygame.image.load('art/Tile_White.png').convert_alpha()
 spikes = pygame.image.load('art/Tile_Spikes.png').convert_alpha()
 ledge = pygame.image.load('art/Tile_Ledge.png').convert_alpha()
 dashcrystal = pygame.image.load('art/Tile_Dashcrystal.png').convert_alpha()
+dashcrystal_used = pygame.image.load('art/Tile_Dashcrystal_Used.png').convert_alpha()
 maddy = pygame.image.load('art/Maddy_Body.png').convert_alpha()
 maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
 maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
@@ -63,6 +64,7 @@ maxfall = 2.3
 dashtime = .25
 walljumpmax = 14
 walljumpextendmax = 24
+crystaltime = 2.6
 
 levelstartpos = (16, 156)
 spikeson = False
@@ -122,6 +124,8 @@ class CelesteEnvironment:
         self.isdashing = False
         self.dashdirection = ""
         self.dashtimer = dashtime
+        self.crystalused = False
+        self.crystaltimer = crystaltime
 
         #Directional input
         self.isfacing = ""
@@ -135,6 +139,7 @@ class CelesteEnvironment:
         self.tilerects = []
         self.spikerects = []
         self.ledgerects = []
+        self.crystalrects = []
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
         self.isdead = False
         self.deathcount = 0
@@ -168,7 +173,7 @@ class CelesteEnvironment:
         self.dt = self.clock.tick_busy_loop(60)/1000
         return False
             
-    #Updates madeline's position
+    #Updates Madeline's position
     def maddy_update(self, action):
         self.move_collision()
         self.maddy_rect.x = self.maddy_pos[0]
@@ -177,6 +182,8 @@ class CelesteEnvironment:
         self.check_dash(action)
         self.check_fallstate()
         self.update_stamina()
+        self.update_crystal()
+        print(self.istired)
         if self.isdead:
             self.ondeath()
 
@@ -188,6 +195,14 @@ class CelesteEnvironment:
         self.maddy_rect.x = self.maddy_pos[0]
         self.maddy_rect.y = self.maddy_pos[1]
         self.isdead = False
+
+    #Checks to see if a dash crystal should refresh
+    def update_crystal(self):
+        if self.crystalused:
+            self.crystaltimer -= self.dt
+            if self.crystaltimer <= 0:
+                self.crystalused = False
+                self.crystaltimer = crystaltime
 
     #Checks if a jump is past its peak
     def check_jump(self):
@@ -230,6 +245,17 @@ class CelesteEnvironment:
         elif not self.isgrabbing and not self.isdashing:
             self.add_gravity()
             self.inair = True
+
+    #Refreshes Madeline's dash upon touching a dash crystal
+    def check_crystal(self):
+        if not self.crystalused:
+            if not self.hasdash:
+                self.hasdash = True
+                self.stamina = stamina_max
+            elif self.istired:
+                self.stamina = stamina_max
+            self.istired = False
+            self.crystalused = True
 
     #Updates stamina
     def update_stamina(self):
@@ -342,20 +368,26 @@ class CelesteEnvironment:
                 collisionlist.append(tile)
         return collisionlist
 
-    #Checks to see if madeline is colliding with spikes
-    def check_spike_collision(self):
+    #Checks to see if Madeline is colliding with spikes
+    def spike_collision(self):
         for tile_rect in self.spikerects:
             if tile_rect.colliderect(self.maddy_rect):
                 if spikeson:
                     self.isdead = True
 
-    #Checks to see if madeline is colliding with ledges
-    def check_ledge_collision(self):
+    #Checks to see if Madeline is colliding with ledges
+    def ledge_collision(self):
         for ledge_rect in self.ledgerects:
             if ledge_rect.colliderect(self.maddy_rect) and self.maddy_yvelocity > 0:
                 self.maddy_rect.bottom = self.maddy_pos[1] = ledge_rect.top
                 self.maddy_pos[1] -= maddy.get_height()
                 self.collisiontypes['BOTTOM'] = True
+
+    #Checks to see if Madeline is colliding with a dash crystal
+    def crystal_collision(self):
+        for tile_rect in self.crystalrects:
+            if tile_rect.colliderect(self.maddy_rect):
+                self.check_crystal()
 
     #Implements collisions
     def move_collision(self):
@@ -365,7 +397,8 @@ class CelesteEnvironment:
         self.maddy_rect.x += self.maddy_xvelocity
         self.maddy_pos[0] += self.maddy_xvelocity
         collisions = self.collision()
-        self.check_spike_collision()
+        self.spike_collision()
+        self.crystal_collision()
         for tile in collisions:
             if self.maddy_xvelocity > 0:
                 self.maddy_rect.right = self.maddy_pos[0] = tile.left
@@ -377,8 +410,9 @@ class CelesteEnvironment:
         self.maddy_rect.y += self.maddy_yvelocity
         self.maddy_pos[1] += self.maddy_yvelocity
         collisions = self.collision()
-        self.check_spike_collision()
-        self.check_ledge_collision()
+        self.spike_collision()
+        self.ledge_collision()
+        self.crystal_collision()
         for tile in collisions:
             if self.maddy_yvelocity > 0:
                 self.maddy_rect.bottom = self.maddy_pos[1] = tile.top
@@ -434,6 +468,7 @@ class CelesteEnvironment:
         self.tilerects = []
         self.spikerects = []
         self.ledgerects = []
+        self.crystalrects = []
         for row in gamemap:
             self.x = 0
             for tile in row:
@@ -444,11 +479,16 @@ class CelesteEnvironment:
                 elif tile == '3':
                     self.screen.blit(ledge, (self.x*tilesize, self.y*tilesize))
                 elif tile == '4':
-                    self.screen.blit(dashcrystal, (self.x*tilesize, self.y*tilesize + 2))
+                    if not self.crystalused:
+                        self.screen.blit(dashcrystal, (self.x*tilesize, self.y*tilesize + 2))
+                    else:
+                        self.screen.blit(dashcrystal_used, (self.x*tilesize, self.y*tilesize + 2))
                 if tile == '2':
                     self.spikerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize + 5, tilesize, tilesize - 5))
                 elif tile == '3':
                     self.ledgerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize - 7))
+                elif tile == '4':
+                    self.crystalrects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize*2, tilesize*2))
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
                 self.x += 1
