@@ -183,7 +183,6 @@ class CelesteEnvironment:
         self.check_fallstate()
         self.update_stamina()
         self.update_crystal()
-        print(self.istired)
         if self.isdead:
             self.ondeath()
 
