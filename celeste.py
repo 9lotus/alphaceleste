@@ -1,13 +1,13 @@
 """
 Author : Rori Wu, Zenia Haroon
 
-Date : 7/27/23
+Date : 7/27/23 - TBD
 
 Description : Contains the CelesteEnvironment class and all of its functionality
 """
-import math
+import math as mth
 dashspeed = 3.4
-diagonaldashspeed = math.sqrt(dashspeed)
+diagonaldashspeed = mth.sqrt(dashspeed)
 
 import pygame, sys
 from pygame import *
@@ -67,7 +67,7 @@ walljumpextendmax = 24
 crystaltime = 2.6
 
 levelstartpos = (16, 156)
-spikeson = False
+spikeson = True
 
 class CelesteEnvironment:
 
@@ -468,6 +468,7 @@ class CelesteEnvironment:
         self.spikerects = []
         self.ledgerects = []
         self.crystalrects = []
+        bob_height = 4
         for row in gamemap:
             self.x = 0
             for tile in row:
@@ -477,11 +478,14 @@ class CelesteEnvironment:
                     self.screen.blit(spikes, (self.x*tilesize, self.y*tilesize))
                 elif tile == '3':
                     self.screen.blit(ledge, (self.x*tilesize, self.y*tilesize))
-                elif tile == '4':
+                elif tile == '4':     
+                    bob_offset = bob_height * mth.sin(mth.radians(pygame.time.get_ticks() * 0.15)) 
                     if not self.crystalused:
-                        self.screen.blit(dashcrystal, (self.x*tilesize, self.y*tilesize + 2))
+                        self.screen.blit(dashcrystal, (self.x*tilesize, self.y*tilesize + 2 + bob_offset))
                     else:
-                        self.screen.blit(dashcrystal_used, (self.x*tilesize, self.y*tilesize + 2))
+                        self.screen.blit(dashcrystal_used, (self.x*tilesize, self.y*tilesize + 2 + bob_offset))               
+                    self.crystalrects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize*2, tilesize*2))
+                    
                 if tile == '2':
                     self.spikerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize + 5, tilesize, tilesize - 5))
                 elif tile == '3':
@@ -490,7 +494,7 @@ class CelesteEnvironment:
                     self.crystalrects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize*2, tilesize*2))
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
-                self.x += 1
+                self.x += 1            
             self.y += 1 
 
     #Performs player actions
