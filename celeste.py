@@ -141,8 +141,7 @@ class CelesteEnvironment:
         self.ledgerects = []
         self.crystalrects = []
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
-        self.isdead = False
-        self.deathcount = 0
+        
 
     #Updates game
     def step(self, action):
