@@ -7,17 +7,34 @@ Description : Contains the CelesteEnvironment class and all of its functionality
 """
 
 import math as mth
+import yaml
 import pygame, sys
 from pygame import *
 
+#yaml configs
+with open("./config/game_parameters.yaml", 'r') as stream:
+    out = yaml.safe_load(stream)
+screen_config = out['screen']
+framerate_config = out['framerate']
+movement_config = out['movement']
+gravity_config = out['gravity']
+jumping_config = out['jumping']
+climbing_config = out['climbing']
+dashing_config = out['dashing']
+crystal_config = out['crystal']
+level_config = out['level']
+with open("./config/map.yaml", 'r') as stream:
+    out = yaml.safe_load(stream)
+map_config = out['screens']
+
 #Screen
-screendims = (640, 360)
-gamedims = (320, 180)
+screendims = screen_config[0]
+gamedims = screen_config[1]
 dis = display.set_mode(screendims)
-screencolor = "black"
+screencolor = screen_config[2]
 
 #Framerate
-fps = 60
+fps = framerate_config[0]
 
 #Visuals
 block = pygame.image.load('art/Tile_White.png').convert_alpha()
@@ -30,70 +47,46 @@ maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
 maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
 maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png').convert_alpha()
 tilesize = block.get_height()
-gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','2','2','2','2','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','2','2','2','2','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['1','1','1','1','1','0','0','0','0','0','2','2','2','2','2','2','0','0','0','0','1','1','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','4','0','0','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',],
-           ['0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1',],
-           ['1','1','1','1','1','1','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1',],
-           ['1','1','1','1','0','1','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','3','3','1','1','1','1','1','1','1','1','1','1','1',],
-           ['1','1','0','0','0','1','0','0','0','0','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1','1','1',],
-           ['1','1','0','0','0','0','0','0','0','0','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','0','0','0','0','0','0','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','0','0','0','0','0','0','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','0','0','0','0','0','0','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','3','3','3','3','3','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','2','2','2','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','0','0','0','0','1','1','1','1','1','1','0','0','0','0','0','0','0','0','2','2','2','2','2','2','1','1','1','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','0','0','0','0','1','1','1','1','1','1','2','2','0','0','0','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
-           ['1','3','3','3','1','1','1','1','1','1','1','1','1','1','1','1','2','2','2','2','2','2','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
-           ['1','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',]]
+gamemap = map_config
 
 #Movement parameters
-maxv_x = 1.5
-maxv_y = 5
+maxv_x = movement_config[0]
+maxv_y = movement_config[1]
 
 #Gravity parameters
-max_fall = 2.3
+max_fall = gravity_config[0]
 gravity = (maxv_y ** 2) / (6 * tilesize)
-prefall_gravity = 14 * gravity
-postfall_gravity = 16.8 * gravity
+prefall_gravity = gravity_config[1] * gravity
+postfall_gravity = gravity_config[2] * gravity
 
 #Jumping parameters
-jumpv = 0.55 * maxv_y
+jumpv = jumping_config[0] * maxv_y
+walljump_max = jumping_config[1]
+walljumpextend_max = jumping_config[2]
 
 #Climbing parameters
-stamina_max = 110
-tired_limit = 20
-grabbing_stamina = 10
-climbingup_stamina = 45.45
-climbingup_v = -0.8
-climbingdown_v = 1.4
-
-#Walljump parameters
-walljump_max = 14
-walljumpextend_max = 24
+stamina_max = climbing_config[0]
+tired_limit = climbing_config[1]
+grabbing_stamina = climbing_config[2]
+climbingup_stamina = climbing_config[3]
+climbingup_v = climbing_config[4]
+climbingdown_v = climbing_config[5]
 
 #Dash parameters
-dashbuffer_time = 4
-dash_time = 0.25
-dash_speed = 3.4
+dashbuffer_time = dashing_config[0]
+dash_time = dashing_config[1]
+dash_speed = dashing_config[2]
 diagonaldash_speed = mth.sqrt(dash_speed)
-postdash_yvelocity = -0.5
+postdash_yvelocity = dashing_config[3]
 
 #Crystal parameters
-crystal_time = 2.6
-boblimit = 3
-bobrate = 0.15
+crystal_time = crystal_config[0]
+boblimit = crystal_config[1]
+bobrate = crystal_config[2]
 
 #Level parameters
-level_startpos = (16, 156)
-spikeson = True
+level_startpos = level_config[0]
+spikeson = level_config[1]
 
 class CelesteEnvironment:
 
