@@ -86,7 +86,8 @@ bobrate = crystal_config[2]
 
 #Level parameters
 level_startpos = level_config[0]
-spikeson = level_config[1]
+level_endpos = level_config[1]
+spikeson = level_config[2]
 
 class CelesteEnvironment:
 
