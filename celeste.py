@@ -5,13 +5,19 @@ Date : 7/27/23 - TBD
 
 Description : Contains the CelesteEnvironment class and all of its functionality
 """
+
 import math as mth
 import pygame, sys
 from pygame import *
 
 #Screen
 screendims = (640, 360)
+gamedims = (320, 180)
 dis = display.set_mode(screendims)
+screencolor = "black"
+
+#Framerate
+fps = 60
 
 #Visuals
 block = pygame.image.load('art/Tile_White.png').convert_alpha()
@@ -48,24 +54,45 @@ gamemap = [['1','1','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
            ['1','3','3','3','1','1','1','1','1','1','1','1','1','1','1','1','2','2','2','2','2','2','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',],
            ['1','0','0','0','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1',]]
 
-#Gravity
-jumpmax_y = 3 * tilesize
-jumpmax_x = 6 * tilesize
+#Movement parameters
 maxv_x = 1.5
 maxv_y = 5
-gravity = (2 * jumpmax_y * maxv_y * maxv_y) / (jumpmax_x * jumpmax_x)
 
-#Parameters
+#Gravity parameters
+max_fall = 2.3
+gravity = (maxv_y ** 2) / (6 * tilesize)
+prefall_gravity = 14 * gravity
+postfall_gravity = 16.8 * gravity
+
+#Jumping parameters
+jumpv = 0.55 * maxv_y
+
+#Climbing parameters
 stamina_max = 110
-maxfall = 2.3
-dashtime = .25
-walljumpmax = 14
-walljumpextendmax = 24
-crystaltime = 2.6
-dashspeed = 3.4
-diagonaldashspeed = mth.sqrt(dashspeed)
+tired_limit = 20
+grabbing_stamina = 10
+climbingup_stamina = 45.45
+climbingup_v = -0.8
+climbingdown_v = 1.4
 
-levelstartpos = (16, 156)
+#Walljump parameters
+walljump_max = 14
+walljumpextend_max = 24
+
+#Dash parameters
+dashbuffer_time = 4
+dash_time = 0.25
+dash_speed = 3.4
+diagonaldash_speed = mth.sqrt(dash_speed)
+postdash_yvelocity = -0.5
+
+#Crystal parameters
+crystal_time = 2.6
+boblimit = 3
+bobrate = 0.15
+
+#Level parameters
+level_startpos = (16, 156)
 spikeson = True
 
 class CelesteEnvironment:
@@ -76,7 +103,7 @@ class CelesteEnvironment:
         #Setup
         pygame.init()
         pygame.display.set_caption("Celeste")
-        self.screen = pygame.Surface((320, 180))
+        self.screen = pygame.Surface(gamedims)
 
         #Time
         self.clock = pygame.time.Clock()
@@ -87,7 +114,7 @@ class CelesteEnvironment:
         self.y = 0
 
         #Maddy hitbox
-        self.maddy_rect = pygame.Rect(levelstartpos[0], levelstartpos[1], maddy.get_width(), maddy.get_height())
+        self.maddy_rect = pygame.Rect(level_startpos[0], level_startpos[1], maddy.get_width(), maddy.get_height())
         
         #Maddy's true position
         self.maddy_pos = [self.maddy_rect.x, self.maddy_rect.y]
@@ -105,8 +132,8 @@ class CelesteEnvironment:
         #Walljumping
         self.againstwall = [False, ""]
         self.lockedmovement = [False, ""]
-        self.walljumppos = 0
-        self.walljumpdistance = walljumpmax
+        self.walljump_pos = 0
+        self.walljump_distance = walljump_max
 
         #Climbing
         self.istired = False
@@ -117,14 +144,16 @@ class CelesteEnvironment:
         self.flashingcounter = 0
 
         #Dashing
-        self.dashbuffer = 4
+        self.dashbuffer = dashbuffer_time
         self.dashcountdown = False
         self.hasdash = True
         self.isdashing = False
         self.dashdirection = ""
-        self.dashtimer = dashtime
+
+        #Dash crystal
+        self.dashtimer = dash_time
         self.crystalused = False
-        self.crystaltimer = crystaltime
+        self.crystaltimer = crystal_time
 
         #Directional input
         self.isfacing = ""
@@ -167,7 +196,7 @@ class CelesteEnvironment:
                     self.movingleft = False
                 if event.key == K_z:
                     self.isgrabbing = False 
-        self.dt = self.clock.tick_busy_loop(60)/1000
+        self.dt = self.clock.tick_busy_loop(fps)/1000
         return False
             
     #Updates Madeline's position
@@ -186,8 +215,8 @@ class CelesteEnvironment:
     #Resets Madeline's position on death
     def ondeath(self):
         self.deathcount += 1
-        self.maddy_pos[0] = levelstartpos[0]
-        self.maddy_pos[1] = levelstartpos[1]
+        self.maddy_pos[0] = level_startpos[0]
+        self.maddy_pos[1] = level_startpos[1]
         self.maddy_rect.x = self.maddy_pos[0]
         self.maddy_rect.y = self.maddy_pos[1]
         self.isdead = False
@@ -198,7 +227,7 @@ class CelesteEnvironment:
             self.crystaltimer -= self.dt
             if self.crystaltimer <= 0:
                 self.crystalused = False
-                self.crystaltimer = crystaltime
+                self.crystaltimer = crystal_time
 
     #Checks if a jump is past its peak
     def check_jump(self):
@@ -210,10 +239,10 @@ class CelesteEnvironment:
 
     #Checks if a walljump is done
     def check_walljump(self):
-        jumpdistance = self.walljumppos - self.maddy_pos[0]
-        if (jumpdistance >= self.walljumpdistance) or (jumpdistance <= -self.walljumpdistance):
+        jumpdistance = self.walljump_pos - self.maddy_pos[0]
+        if (jumpdistance >= self.walljump_distance) or (jumpdistance <= -self.walljump_distance):
             self.lockedmovement = [False, ""]
-            self.walljumpdistance = walljumpmax
+            self.walljump_distance = walljump_max
 
     #Checks if Madeline is dashing
     def check_dash(self, action):
@@ -221,16 +250,16 @@ class CelesteEnvironment:
             self.dashbuffer -= 1
             if self.dashbuffer == 0:
                 self.move_dash(action)
-                self.dashbuffer = 4
+                self.dashbuffer = dashbuffer_time
                 self.dashcountdown = False
         if self.isdashing and self.dashtimer > 0:
             self.dash()
             self.dashtimer -= self.dt
         elif self.isdashing:
-            self.dashtimer = dashtime
+            self.dashtimer = dash_time
             self.isdashing = False
             if self.maddy_yvelocity < 0:
-                self.maddy_yvelocity = -.5
+                self.maddy_yvelocity = postdash_yvelocity
             self.maddy_xvelocity = 0
 
     #Checks if Madeline is in the air
@@ -260,12 +289,12 @@ class CelesteEnvironment:
     #Updates stamina
     def update_stamina(self):
         if self.isclimbingup:
-            self.stamina -= self.dt * 45.45
+            self.stamina -= self.dt * climbingup_stamina
         elif self.isgrabbing:
-            self.stamina -= self.dt * 10
+            self.stamina -= self.dt * grabbing_stamina
         if self.stamina < 0:
             self.stamina = 0
-        if self.stamina <= 20:
+        if self.stamina <= tired_limit:
             self.istired = True
         if self.stamina == 0:
             self.isgrabbing = False
@@ -275,22 +304,22 @@ class CelesteEnvironment:
     #Implements gravity
     def add_gravity(self):
         if self.pastjumppeak:
-            self.maddy_yvelocity += gravity * 14 * self.dt 
+            self.maddy_yvelocity += prefall_gravity * self.dt 
         else:
-            self.maddy_yvelocity += gravity * 16.8 * self.dt
-        if self.maddy_yvelocity > maxfall:
-            self.maddy_yvelocity = maxfall
+            self.maddy_yvelocity += postfall_gravity * self.dt
+        if self.maddy_yvelocity > max_fall:
+            self.maddy_yvelocity = max_fall
 
     #Jump mechanics
     def jump(self):
         if not self.inair and not self.isgrabbing:
             self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= 1.1 * jumpmax_y * (maxv_y / (jumpmax_x))
+            self.maddy_yvelocity -= jumpv
         elif self.againstwall[0]:
-            self.walljumppos = self.maddy_pos[0]
+            self.walljump_pos = self.maddy_pos[0]
             self.lockedmovement[0] = True
             self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= 1.1 * jumpmax_y * (maxv_y / (jumpmax_x)) 
+            self.maddy_yvelocity -= jumpv
             if self.againstwall[1] == "RIGHT":
                 self.lockedmovement[1] = "LEFT"
             elif self.againstwall[1] == "LEFT":
@@ -299,29 +328,29 @@ class CelesteEnvironment:
     #Dash mechanics
     def dash(self):
         if self.dashdirection == "RIGHT":
-            self.maddy_xvelocity = dashspeed
+            self.maddy_xvelocity = dash_speed
             self.maddy_yvelocity = 0
         elif self.dashdirection == "LEFT":
-            self.maddy_xvelocity = -dashspeed
+            self.maddy_xvelocity = -dash_speed
             self.maddy_yvelocity = 0
         elif self.dashdirection == "UP":
             self.maddy_xvelocity = 0
-            self.maddy_yvelocity = -dashspeed
+            self.maddy_yvelocity = -dash_speed
         elif self.dashdirection == "DOWN":
             self.maddy_xvelocity = 0
-            self.maddy_yvelocity = dashspeed
+            self.maddy_yvelocity = dash_speed
         elif self.dashdirection == "UPRIGHT":
-            self.maddy_xvelocity = diagonaldashspeed
-            self.maddy_yvelocity = -diagonaldashspeed
+            self.maddy_xvelocity = diagonaldash_speed
+            self.maddy_yvelocity = -diagonaldash_speed
         elif self.dashdirection == "DOWNRIGHT":
-            self.maddy_xvelocity = diagonaldashspeed
-            self.maddy_yvelocity = diagonaldashspeed
+            self.maddy_xvelocity = diagonaldash_speed
+            self.maddy_yvelocity = diagonaldash_speed
         elif self.dashdirection == "UPLEFT":
-            self.maddy_xvelocity = -diagonaldashspeed
-            self.maddy_yvelocity = -diagonaldashspeed
+            self.maddy_xvelocity = -diagonaldash_speed
+            self.maddy_yvelocity = -diagonaldash_speed
         elif self.dashdirection == "DOWNLEFT":
-            self.maddy_xvelocity = -diagonaldashspeed
-            self.maddy_yvelocity = diagonaldashspeed
+            self.maddy_xvelocity = -diagonaldash_speed
+            self.maddy_yvelocity = diagonaldash_speed
 
     #Sets dash direction
     def dash_direction(self, directions):
@@ -389,17 +418,30 @@ class CelesteEnvironment:
             if tile_rect.colliderect(self.maddy_rect):
                 self.check_crystal()
 
-    #Implements collisions
-    def move_collision(self):
+    #Checks if Madeline is against the wall
+    def check_againstwall(self):
         isagainstright = False
         isagainstleft = False
+        for tile in self.tilerects:   
+            self.maddy_rect.x += 1
+            if pygame.Rect.colliderect(self.maddy_rect, tile):
+                isagainstright = True
+            self.maddy_rect.x -= 2
+            if pygame.Rect.colliderect(self.maddy_rect, tile):
+                isagainstleft = True
+            self.maddy_rect.x += 1
+        if isagainstright:
+            self.againstwall = [True, "RIGHT"]
+        elif isagainstleft:
+            self.againstwall = [True, "LEFT"]
+        else:
+            self.againstwall = [False, ""]
+
+    #Implements collisions
+    def move_collision(self):
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
         self.maddy_rect.x += self.maddy_xvelocity
         self.maddy_pos[0] += self.maddy_xvelocity
-        if self.maddy_pos[0] <= 0:
-            self.maddy_rect.x = self.maddy_pos[0] = 0
-        elif self.maddy_pos[0] >= 320 - maddy.get_width():
-            self.maddy_rect.x = self.maddy_pos[0] = 320 - maddy.get_width()
         collisions = self.collision()
         for tile in collisions:
             if self.maddy_xvelocity > 0:
@@ -421,30 +463,21 @@ class CelesteEnvironment:
                 self.maddy_rect.top = self.maddy_pos[1] = tile.bottom
                 self.collisiontypes['TOP'] = True
                 self.maddy_yvelocity = 0
+        if self.maddy_pos[0] <= 0:
+            self.maddy_rect.x = self.maddy_pos[0] = 0
+        elif self.maddy_pos[0] >= gamedims[0] - maddy.get_width():
+            self.maddy_rect.x = self.maddy_pos[0] = gamedims[0] - maddy.get_width()
         self.spike_collision()
         self.ledge_collision()
         self.crystal_collision()
-        for tile in self.tilerects:   
-            self.maddy_rect.x += 1
-            if pygame.Rect.colliderect(self.maddy_rect, tile):
-                isagainstright = True
-            self.maddy_rect.x -= 2
-            if pygame.Rect.colliderect(self.maddy_rect, tile):
-                isagainstleft = True
-            self.maddy_rect.x += 1
-        if isagainstright:
-            self.againstwall = [True, "RIGHT"]
-        elif isagainstleft:
-            self.againstwall = [True, "LEFT"]
-        else:
-            self.againstwall = [False, ""]
+        self.check_againstwall()
 
     #Renders all visuals
     def render(self):
-        self.screen.fill("black")
+        self.screen.fill(screencolor)
         self.render_maddy()
         self.render_gamemap()
-        surf = pygame.transform.scale(self.screen, (640, 360))
+        surf = pygame.transform.scale(self.screen, screendims)
         dis.blit(surf, (0, 0))
         pygame.display.flip()
 
@@ -471,7 +504,7 @@ class CelesteEnvironment:
         self.spikerects = []
         self.ledgerects = []
         self.crystalrects = []
-        bob_height = 3
+        bob_height = boblimit
         for row in gamemap:
             self.x = 0
             for tile in row:
@@ -482,20 +515,19 @@ class CelesteEnvironment:
                 elif tile == '3':
                     self.screen.blit(ledge, (self.x*tilesize, self.y*tilesize))
                 elif tile == '4':     
-                    bob_offset = bob_height * mth.sin(mth.radians(pygame.time.get_ticks() * 0.15)) 
+                    bob_offset = bob_height * mth.sin(mth.radians(pygame.time.get_ticks() * bobrate)) 
                     if not self.crystalused:
                         self.screen.blit(dashcrystal, (self.x*tilesize, self.y*tilesize + bob_offset))
                     else:
                         self.screen.blit(dashcrystal_used, (self.x*tilesize, self.y*tilesize + bob_offset))               
-                    self.crystalrects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize*2, tilesize*2)) 
                 if tile == '2':
-                    self.spikerects.append(pygame.Rect(self.x*tilesize + 1, self.y*tilesize + 5, tilesize - 2, tilesize - 5))
+                    self.spikerects.append(pygame.Rect(self.x*tilesize + 1, self.y*tilesize + 5, spikes.get_width() - 2, spikes.get_height() - 5))
                 elif tile == '3':
-                    self.ledgerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize - 7))
+                    self.ledgerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, ledge.get_width(), ledge.get_height() - 7))
                 elif tile == '4':
-                    self.crystalrects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize*2, tilesize*2))
+                    self.crystalrects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, dashcrystal.get_width(), dashcrystal.get_height()))
                 elif tile != '0':
-                    self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, tilesize, tilesize))
+                    self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, block.get_width(), block.get_height()))
                 self.x += 1            
             self.y += 1 
 
@@ -518,10 +550,10 @@ class CelesteEnvironment:
         if self.isgrabbing:
             if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
                 if action[pygame.K_UP]:
-                    self.maddy_yvelocity = -.8
+                    self.maddy_yvelocity = climbingup_v
                     self.isclimbingup = True
                 elif action[pygame.K_DOWN]:
-                    self.maddy_yvelocity = 1.4
+                    self.maddy_yvelocity = climbingdown_v
                     self.isclimbingup = False
                 else:
                     self.maddy_yvelocity = 0
@@ -537,11 +569,11 @@ class CelesteEnvironment:
                     if self.lockedmovement[1] == "RIGHT":
                         self.maddy_xvelocity = maxv_x
                         if self.movingleft:
-                            self.walljumpdistance = walljumpextendmax
+                            self.walljump_distance = walljumpextend_max
                     elif self.lockedmovement[1] == "LEFT":
                         self.maddy_xvelocity = -maxv_x
                         if self.movingright:
-                            self.walljumpdistance = walljumpextendmax
+                            self.walljump_distance = walljumpextend_max
                 elif self.movingright:
                     self.maddy_xvelocity = maxv_x
                 elif self.movingleft:
