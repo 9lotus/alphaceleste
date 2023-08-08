@@ -106,13 +106,13 @@ class CelesteEnvironment:
         self.x = 0
         self.y = 0
 
-        #Maddy hitbox
+        #Madeline's hitbox
         self.maddy_rect = pygame.Rect(level_startpos[0], level_startpos[1], maddy.get_width(), maddy.get_height())
         
-        #Maddy's true position
+        #Madeline's true position
         self.maddy_pos = [self.maddy_rect.x, self.maddy_rect.y]
 
-        #Vertical and horizontal movement
+        #Movement
         self.maddy_xvelocity = 0
         self.maddy_yvelocity = 0
         self.movingright = False
@@ -268,17 +268,6 @@ class CelesteEnvironment:
             self.add_gravity()
             self.inair = True
 
-    #Crystal mechanics
-    def check_crystal(self):
-        if not self.crystalused:
-            if not self.hasdash:
-                self.hasdash = True
-                self.stamina = stamina_max
-            elif self.istired:
-                self.stamina = stamina_max
-            self.istired = False
-            self.crystalused = True
-
     #Updates stamina
     def update_stamina(self):
         if self.isclimbingup:
@@ -302,6 +291,17 @@ class CelesteEnvironment:
             self.maddy_yvelocity += postfall_gravity * self.dt
         if self.maddy_yvelocity > max_fall:
             self.maddy_yvelocity = max_fall
+
+    #Crystal mechanics
+    def check_crystal(self):
+        if not self.crystalused:
+            if not self.hasdash:
+                self.hasdash = True
+                self.stamina = stamina_max
+            elif self.istired:
+                self.stamina = stamina_max
+            self.istired = False
+            self.crystalused = True
 
     #Jump mechanics
     def jump(self):
@@ -530,7 +530,7 @@ class CelesteEnvironment:
         self.move_leftright()
         self.move_look(action)
 
-    #Assigns climbing movement
+    #Climbing movement
     def move_climb(self, action):
         if action[pygame.K_z]:
             if self.cangrab:
@@ -554,7 +554,7 @@ class CelesteEnvironment:
             else:
                 self.maddy_yvelocity = 0
 
-    #Assigns left-right movement
+    #Moving left/right
     def move_leftright(self):
         if not self.isdashing and not self.isgrabbing:
             if not(self.movingleft and self.movingright):
@@ -577,7 +577,7 @@ class CelesteEnvironment:
                 self.isfacing = "False"
                 self.maddy_xvelocity = 0
 
-    #Assigns looking up and down
+    #Looking up/down
     def move_look(self, action):
         if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
             if action[pygame.K_UP]:
@@ -587,7 +587,7 @@ class CelesteEnvironment:
             else:
                 self.islooking = "False"
 
-    #Assigns dash directions
+    #Dashing movement
     def move_dash(self, action):
         directions = []
         if action[pygame.K_RIGHT]:
@@ -600,12 +600,12 @@ class CelesteEnvironment:
             directions.append("DOWN")
         self.dash_direction(directions)
 
-    #Quits the game
-    @staticmethod
-    def close():
-        pygame.quit()
-    
     #Returns player input
     @staticmethod
     def get_playerinput():
         return pygame.key.get_pressed()
+
+    #Quits the game
+    @staticmethod
+    def close():
+        pygame.quit()
