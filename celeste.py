@@ -158,6 +158,7 @@ class CelesteEnvironment:
         self.deathcount = 0
         
         #Collisions
+        self.againstbottom = False
         self.tilerects = []
         self.spikerects = []
         self.ledgerects = []
@@ -258,7 +259,7 @@ class CelesteEnvironment:
 
     #Checks if Madeline is in the air
     def check_fallstate(self):
-        if self.collisiontypes['BOTTOM']:
+        if self.againstbottom:
             self.inair = False
             self.stamina = stamina_max
             self.istired = False
@@ -431,6 +432,24 @@ class CelesteEnvironment:
         else:
             self.againstwall = [False, ""]
 
+    #Checks if Madeline is on top of a block
+    def check_againstbottom(self):
+        isagainstbottom = False
+        for tile in self.tilerects:   
+            self.maddy_rect.y += 1
+            if pygame.Rect.colliderect(self.maddy_rect, tile):
+                isagainstbottom = True
+            self.maddy_rect.y -= 1
+        for tile in self.ledgerects:   
+            self.maddy_rect.y += 1
+            if pygame.Rect.colliderect(self.maddy_rect, tile) and self.maddy_yvelocity > 0 and self.maddy_pos[1] + maddy.get_height() <= tile.top:
+                isagainstbottom = True
+            self.maddy_rect.y -= 1
+        if isagainstbottom:
+            self.againstbottom = True
+        else:
+            self.againstbottom = False
+
     #Implements collisions
     def move_collision(self):
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
@@ -465,6 +484,7 @@ class CelesteEnvironment:
         self.ledge_collision()
         self.crystal_collision()
         self.check_againstwall()
+        self.check_againstbottom()
 
     #Renders all visuals
     def render(self):
