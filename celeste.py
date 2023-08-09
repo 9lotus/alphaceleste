@@ -47,7 +47,8 @@ ledge = pygame.image.load('art/Tile_Ledge.png').convert_alpha()
 dashcrystal = pygame.image.load('art/Tile_Dashcrystal.png').convert_alpha()
 dashcrystal_used = pygame.image.load('art/Tile_Dashcrystal_Used.png').convert_alpha()
 maddy = pygame.image.load('art/Maddy_Body.png').convert_alpha()
-maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
+maddy_tired_red = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
+maddy_tired_white = pygame.image.load('art/Maddy_Body_White.png').convert_alpha()
 maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
 maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png').convert_alpha()
 tilesize = block.get_height()
@@ -526,10 +527,10 @@ class CelesteEnvironment:
     def render_maddy(self):
         if self.istired:
             if self.flashingcounter == 0:
-                self.screen.blit(maddy_tired, (self.maddy_pos[0], self.maddy_pos[1]))
+                self.screen.blit(maddy_tired_white, (self.maddy_pos[0], self.maddy_pos[1]))
                 self.flashingcounter += 1
             else:
-                self.screen.blit(maddy, (self.maddy_pos[0], self.maddy_pos[1]))
+                self.screen.blit(maddy_tired_red, (self.maddy_pos[0], self.maddy_pos[1]))
                 self.flashingcounter -= 1
         else:
             self.screen.blit(maddy, (self.maddy_pos[0], self.maddy_pos[1]))
