@@ -88,6 +88,7 @@ bobrate = crystal_config[2]
 level_startpos = level_config[0]
 level_endpos = level_config[1]
 spikeson = level_config[2]
+yoffset = level_config[3]
 
 class CelesteEnvironment:
 
@@ -482,6 +483,8 @@ class CelesteEnvironment:
             self.maddy_rect.x = self.maddy_pos[0] = 0
         elif self.maddy_pos[0] >= gamedims[0] - maddy.get_width():
             self.maddy_rect.x = self.maddy_pos[0] = gamedims[0] - maddy.get_width()
+        if self.maddy_pos[1] <= 0 - 2 * tilesize:
+            self.maddy_rect.y = self.maddy_pos[1] = 0 - 2 * tilesize
         self.spike_collision()
         self.ledge_collision()
         self.crystal_collision()
@@ -515,7 +518,7 @@ class CelesteEnvironment:
 
     #Renders the game map
     def render_gamemap(self):
-        self.y = 0
+        self.y = yoffset
         self.tilerects = []
         self.spikerects = []
         self.ledgerects = []
