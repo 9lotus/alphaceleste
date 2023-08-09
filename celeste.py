@@ -579,6 +579,8 @@ class CelesteEnvironment:
                     self.isclimbingup = False
             else:
                 self.maddy_yvelocity = 0
+        else:
+            self.isclimbingup = False
 
     #Moving left/right
     def move_leftright(self):
