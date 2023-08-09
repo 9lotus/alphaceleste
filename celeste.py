@@ -15,6 +15,7 @@ from pygame import *
 with open("./config/game_parameters.yaml", 'r') as stream:
     out = yaml.safe_load(stream)
 screen_config = out['screen']
+font_config = out['font']
 framerate_config = out['framerate']
 movement_config = out['movement']
 gravity_config = out['gravity']
@@ -33,6 +34,9 @@ gamedims = screen_config[1]
 dis = display.set_mode(screendims)
 screencolor = screen_config[2]
 
+#Font
+myfont = (font_config[0], font_config[1])
+
 #Framerate
 fps = framerate_config[0]
 
@@ -43,7 +47,8 @@ ledge = pygame.image.load('art/Tile_Ledge.png').convert_alpha()
 dashcrystal = pygame.image.load('art/Tile_Dashcrystal.png').convert_alpha()
 dashcrystal_used = pygame.image.load('art/Tile_Dashcrystal_Used.png').convert_alpha()
 maddy = pygame.image.load('art/Maddy_Body.png').convert_alpha()
-maddy_tired = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
+maddy_tired_red = pygame.image.load('art/Maddy_Body_Flashred.png').convert_alpha()
+maddy_tired_white = pygame.image.load('art/Maddy_Body_White.png').convert_alpha()
 maddy_hair_red = pygame.image.load('art/Maddy_Hair_Red.png').convert_alpha()
 maddy_hair_blue = pygame.image.load('art/Maddy_Hair_Blue.png').convert_alpha()
 tilesize = block.get_height()
@@ -97,12 +102,20 @@ class CelesteEnvironment:
 
         #Setup
         pygame.init()
-        pygame.display.set_caption("Celeste")
+        pygame.font.init()
         self.screen = pygame.Surface(gamedims)
 
         #Time
         self.clock = pygame.time.Clock()
         self.dt = 0
+        self.timer = 0
+        self.timeoffset = 0
+
+        #Font
+        self.timerfont = pygame.font.SysFont(myfont[0], myfont[1])
+        self.timertext = self.timerfont.render("", False, "white")
+        self.deathfont = pygame.font.SysFont(myfont[0], myfont[1])
+        self.deathtext = self.deathfont.render("", False, "white")
 
         #Coordinates
         self.x = 0
@@ -192,7 +205,8 @@ class CelesteEnvironment:
                     self.movingleft = False
                 if event.key == K_z:
                     self.isgrabbing = False 
-        self.dt = self.clock.tick_busy_loop(fps)/1000
+        self.dt = self.clock.tick_busy_loop(fps) / 1000
+        self.timer = (pygame.time.get_ticks() / 1000) - self.timeoffset
         return False
             
     #Updates Madeline's position
@@ -205,8 +219,14 @@ class CelesteEnvironment:
         self.check_fallstate()
         self.update_stamina()
         self.update_crystal()
+        self.check_reachedgoal()
         if self.isdead:
             self.ondeath()
+
+    #Checks if Madeline reached the goal
+    def check_reachedgoal(self):
+        if self.maddy_pos[0] >= gamedims[0] - maddy.get_width():
+            self.reset()
 
     #Resets Madeline's position on death
     def ondeath(self):
@@ -497,6 +517,8 @@ class CelesteEnvironment:
         self.screen.fill(screencolor)
         self.render_maddy()
         self.render_gamemap()
+        self.render_timer()
+        self.render_deathcount()
         surf = pygame.transform.scale(self.screen, screendims)
         dis.blit(surf, (0, 0))
         pygame.display.flip()
@@ -505,10 +527,10 @@ class CelesteEnvironment:
     def render_maddy(self):
         if self.istired:
             if self.flashingcounter == 0:
-                self.screen.blit(maddy_tired, (self.maddy_pos[0], self.maddy_pos[1]))
+                self.screen.blit(maddy_tired_white, (self.maddy_pos[0], self.maddy_pos[1]))
                 self.flashingcounter += 1
             else:
-                self.screen.blit(maddy, (self.maddy_pos[0], self.maddy_pos[1]))
+                self.screen.blit(maddy_tired_red, (self.maddy_pos[0], self.maddy_pos[1]))
                 self.flashingcounter -= 1
         else:
             self.screen.blit(maddy, (self.maddy_pos[0], self.maddy_pos[1]))
@@ -549,7 +571,17 @@ class CelesteEnvironment:
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, block.get_width(), block.get_height()))
                 self.x += 1            
-            self.y += 1 
+            self.y += 1
+
+    #Renders in game timer
+    def render_timer(self):
+        self.timertext = self.timerfont.render(str(round(self.timer, 2)), False, "white")
+        self.screen.blit(self.timertext, (gamedims[0] - tilesize * 6, tilesize / 2))
+
+    #Renders death count
+    def render_deathcount(self):
+        self.deathtext = self.deathfont.render(("Deaths: " + str(self.deathcount)), False, "white")
+        self.screen.blit(self.deathtext, (gamedims[0] - tilesize * 6, tilesize * 2))
 
     #Performs player actions
     def get_playeraction(self, action):
@@ -628,6 +660,71 @@ class CelesteEnvironment:
         if action[pygame.K_DOWN]:
             directions.append("DOWN")
         self.dash_direction(directions)
+
+    #Resets the game
+    def reset(self):
+
+        #Time
+        self.timeoffset += self.timer
+        self.timer = 0
+    
+        #Madeline's true position
+        self.maddy_pos[0] = level_startpos[0]
+        self.maddy_pos[1] = level_startpos[1]
+        self.maddy_rect.x = self.maddy_pos[0]
+        self.maddy_rect.y = self.maddy_pos[1]
+
+        #Movement
+        self.maddy_xvelocity = 0
+        self.maddy_yvelocity = 0
+        self.movingright = False
+        self.movingleft = False
+
+        #Jumping
+        self.pastjumppeak = False
+        self.inair = False
+
+        #Walljumping
+        self.againstwall = [False, ""]
+        self.lockedmovement = [False, ""]
+        self.walljump_pos = 0
+        self.walljump_distance = walljump_max
+
+        #Climbing
+        self.istired = False
+        self.cangrab = True
+        self.isclimbingup = False
+        self.isgrabbing = False
+        self.stamina = stamina_max
+        self.flashingcounter = 0
+
+        #Dashing
+        self.dashbuffer = dashbuffer_time
+        self.dashcountdown = False
+        self.hasdash = True
+        self.isdashing = False
+        self.dashdirection = ""
+
+        #Dash crystal
+        self.dashtimer = dash_time
+        self.crystalused = False
+        self.crystaltimer = crystal_time
+
+        #Directional input
+        self.isfacing = ""
+        self.islooking = ""
+
+        #Death
+        self.isdead = False
+        self.deathcount = 0
+        
+        #Collisions
+        self.againstbottom = False
+        self.tilerects = []
+        self.spikerects = []
+        self.ledgerects = []
+        self.crystalrects = []
+        self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
 
     #Returns player input
     @staticmethod
