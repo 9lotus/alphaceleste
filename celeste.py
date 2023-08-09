@@ -15,6 +15,7 @@ from pygame import *
 with open("./config/game_parameters.yaml", 'r') as stream:
     out = yaml.safe_load(stream)
 screen_config = out['screen']
+font_config = out['font']
 framerate_config = out['framerate']
 movement_config = out['movement']
 gravity_config = out['gravity']
@@ -32,6 +33,9 @@ screendims = screen_config[0]
 gamedims = screen_config[1]
 dis = display.set_mode(screendims)
 screencolor = screen_config[2]
+
+#Font
+myfont = (font_config[0], font_config[1])
 
 #Framerate
 fps = framerate_config[0]
@@ -97,12 +101,19 @@ class CelesteEnvironment:
 
         #Setup
         pygame.init()
-        pygame.display.set_caption("Celeste")
+        pygame.font.init()
         self.screen = pygame.Surface(gamedims)
 
         #Time
         self.clock = pygame.time.Clock()
         self.dt = 0
+        self.timer = 0
+
+        #Font
+        self.timerfont = pygame.font.SysFont(myfont[0], myfont[1])
+        self.timertext = self.timerfont.render("", False, "white")
+        self.deathfont = pygame.font.SysFont(myfont[0], myfont[1])
+        self.deathtext = self.deathfont.render("", False, "white")
 
         #Coordinates
         self.x = 0
@@ -192,7 +203,8 @@ class CelesteEnvironment:
                     self.movingleft = False
                 if event.key == K_z:
                     self.isgrabbing = False 
-        self.dt = self.clock.tick_busy_loop(fps)/1000
+        self.dt = self.clock.tick_busy_loop(fps) / 1000
+        self.timer = pygame.time.get_ticks() / 1000
         return False
             
     #Updates Madeline's position
@@ -497,6 +509,8 @@ class CelesteEnvironment:
         self.screen.fill(screencolor)
         self.render_maddy()
         self.render_gamemap()
+        self.render_timer()
+        self.render_deathcount()
         surf = pygame.transform.scale(self.screen, screendims)
         dis.blit(surf, (0, 0))
         pygame.display.flip()
@@ -549,7 +563,17 @@ class CelesteEnvironment:
                 elif tile != '0':
                     self.tilerects.append(pygame.Rect(self.x*tilesize, self.y*tilesize, block.get_width(), block.get_height()))
                 self.x += 1            
-            self.y += 1 
+            self.y += 1
+
+    #Renders in game timer
+    def render_timer(self):
+        self.timertext = self.timerfont.render(str(round(self.timer, 2)), False, "white")
+        self.screen.blit(self.timertext, (gamedims[0] - tilesize * 8, tilesize))
+
+    #Renders death count
+    def render_deathcount(self):
+        self.deathtext = self.deathfont.render(("Deaths: " + str(self.deathcount)), False, "white")
+        self.screen.blit(self.deathtext, (gamedims[0] - tilesize * 8, tilesize * 3))
 
     #Performs player actions
     def get_playeraction(self, action):
