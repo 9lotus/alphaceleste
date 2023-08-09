@@ -308,18 +308,19 @@ class CelesteEnvironment:
 
     #Jump mechanics
     def jump(self):
-        if not self.inair and not self.isgrabbing:
-            self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= jumpv
-        elif self.againstwall[0]:
-            self.walljump_pos = self.maddy_pos[0]
-            self.lockedmovement[0] = True
-            self.maddy_yvelocity = 0
-            self.maddy_yvelocity -= jumpv
-            if self.againstwall[1] == "RIGHT":
-                self.lockedmovement[1] = "LEFT"
-            elif self.againstwall[1] == "LEFT":
-                self.lockedmovement[1] = "RIGHT"
+        if not self.isgrabbing:
+            if not self.inair:
+                self.maddy_yvelocity = 0
+                self.maddy_yvelocity -= jumpv
+            elif self.againstwall[0]:
+                self.walljump_pos = self.maddy_pos[0]
+                self.lockedmovement[0] = True
+                self.maddy_yvelocity = 0
+                self.maddy_yvelocity -= jumpv
+                if self.againstwall[1] == "RIGHT":
+                    self.lockedmovement[1] = "LEFT"
+                elif self.againstwall[1] == "LEFT":
+                    self.lockedmovement[1] = "RIGHT"
 
     #Dash mechanics
     def dash(self):
