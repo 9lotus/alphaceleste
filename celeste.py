@@ -108,6 +108,7 @@ class CelesteEnvironment:
         self.clock = pygame.time.Clock()
         self.dt = 0
         self.timer = 0
+        self.timeoffset = 0
 
         #Font
         self.timerfont = pygame.font.SysFont(myfont[0], myfont[1])
@@ -204,7 +205,7 @@ class CelesteEnvironment:
                 if event.key == K_z:
                     self.isgrabbing = False 
         self.dt = self.clock.tick_busy_loop(fps) / 1000
-        self.timer = pygame.time.get_ticks() / 1000
+        self.timer = (pygame.time.get_ticks() / 1000) - self.timeoffset
         return False
             
     #Updates Madeline's position
@@ -217,8 +218,14 @@ class CelesteEnvironment:
         self.check_fallstate()
         self.update_stamina()
         self.update_crystal()
+        self.check_reachedgoal()
         if self.isdead:
             self.ondeath()
+
+    #Checks if Madeline reached the goal
+    def check_reachedgoal(self):
+        if self.maddy_pos[0] >= gamedims[0] - maddy.get_width():
+            self.reset()
 
     #Resets Madeline's position on death
     def ondeath(self):
@@ -568,12 +575,12 @@ class CelesteEnvironment:
     #Renders in game timer
     def render_timer(self):
         self.timertext = self.timerfont.render(str(round(self.timer, 2)), False, "white")
-        self.screen.blit(self.timertext, (gamedims[0] - tilesize * 8, tilesize))
+        self.screen.blit(self.timertext, (gamedims[0] - tilesize * 6, tilesize / 2))
 
     #Renders death count
     def render_deathcount(self):
         self.deathtext = self.deathfont.render(("Deaths: " + str(self.deathcount)), False, "white")
-        self.screen.blit(self.deathtext, (gamedims[0] - tilesize * 8, tilesize * 3))
+        self.screen.blit(self.deathtext, (gamedims[0] - tilesize * 6, tilesize * 2))
 
     #Performs player actions
     def get_playeraction(self, action):
@@ -652,6 +659,71 @@ class CelesteEnvironment:
         if action[pygame.K_DOWN]:
             directions.append("DOWN")
         self.dash_direction(directions)
+
+    #Resets the game
+    def reset(self):
+
+        #Time
+        self.timeoffset += self.timer
+        self.timer = 0
+    
+        #Madeline's true position
+        self.maddy_pos[0] = level_startpos[0]
+        self.maddy_pos[1] = level_startpos[1]
+        self.maddy_rect.x = self.maddy_pos[0]
+        self.maddy_rect.y = self.maddy_pos[1]
+
+        #Movement
+        self.maddy_xvelocity = 0
+        self.maddy_yvelocity = 0
+        self.movingright = False
+        self.movingleft = False
+
+        #Jumping
+        self.pastjumppeak = False
+        self.inair = False
+
+        #Walljumping
+        self.againstwall = [False, ""]
+        self.lockedmovement = [False, ""]
+        self.walljump_pos = 0
+        self.walljump_distance = walljump_max
+
+        #Climbing
+        self.istired = False
+        self.cangrab = True
+        self.isclimbingup = False
+        self.isgrabbing = False
+        self.stamina = stamina_max
+        self.flashingcounter = 0
+
+        #Dashing
+        self.dashbuffer = dashbuffer_time
+        self.dashcountdown = False
+        self.hasdash = True
+        self.isdashing = False
+        self.dashdirection = ""
+
+        #Dash crystal
+        self.dashtimer = dash_time
+        self.crystalused = False
+        self.crystaltimer = crystal_time
+
+        #Directional input
+        self.isfacing = ""
+        self.islooking = ""
+
+        #Death
+        self.isdead = False
+        self.deathcount = 0
+        
+        #Collisions
+        self.againstbottom = False
+        self.tilerects = []
+        self.spikerects = []
+        self.ledgerects = []
+        self.crystalrects = []
+        self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
 
     #Returns player input
     @staticmethod
