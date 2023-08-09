@@ -110,6 +110,7 @@ class CelesteEnvironment:
         self.dt = 0
         self.timer = 0
         self.timeoffset = 0
+        self.besttime = 0
 
         #Font
         self.timerfont = pygame.font.SysFont(myfont[0], myfont[1])
@@ -576,12 +577,12 @@ class CelesteEnvironment:
     #Renders in game timer
     def render_timer(self):
         self.timertext = self.timerfont.render(str(round(self.timer, 2)), False, "white")
-        self.screen.blit(self.timertext, (gamedims[0] - tilesize * 6, tilesize / 2))
+        self.screen.blit(self.timertext, (gamedims[0] - tilesize * 7, tilesize / 2))
 
     #Renders death count
     def render_deathcount(self):
         self.deathtext = self.deathfont.render(("Deaths: " + str(self.deathcount)), False, "white")
-        self.screen.blit(self.deathtext, (gamedims[0] - tilesize * 6, tilesize * 2))
+        self.screen.blit(self.deathtext, (gamedims[0] - tilesize * 7, tilesize * 2))
 
     #Performs player actions
     def get_playeraction(self, action):
@@ -661,11 +662,21 @@ class CelesteEnvironment:
             directions.append("DOWN")
         self.dash_direction(directions)
 
+    #Adds the best time to a text file
+    def add_best(self):
+        self.besttime = self.timer
+        f = open('best_time.txt', 'r').read()
+        if f.strip() == '' or self.besttime < float(f):
+            f = open('best_time.txt', 'w')
+            f.write(str(round(self.besttime, 2)))
+            f.close()
+
     #Resets the game
     def reset(self):
 
         #Time
         self.timeoffset += self.timer
+        self.add_best()
         self.timer = 0
     
         #Madeline's true position
