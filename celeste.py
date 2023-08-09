@@ -458,12 +458,14 @@ class CelesteEnvironment:
         collisions = self.collision()
         for tile in collisions:
             if self.maddy_xvelocity > 0:
-                self.maddy_rect.right = self.maddy_pos[0] = tile.left
-                self.maddy_pos[0] -= maddy.get_width()
-                self.collisiontypes['RIGHT'] = True
+                if self.maddy_pos[0] + maddy.get_width() - tile.left <= 2.5 or self.isdashing:
+                    self.maddy_rect.right = self.maddy_pos[0] = tile.left
+                    self.maddy_pos[0] -= maddy.get_width()
+                    self.collisiontypes['RIGHT'] = True
             elif self.maddy_xvelocity < 0:
-                self.maddy_rect.left = self.maddy_pos[0] = tile.right
-                self.collisiontypes['LEFT'] = True
+                if tile.right - self.maddy_pos[0] <= 2.5 or self.isdashing:
+                    self.maddy_rect.left = self.maddy_pos[0] = tile.right
+                    self.collisiontypes['LEFT'] = True
         self.maddy_rect.y += self.maddy_yvelocity
         self.maddy_pos[1] += self.maddy_yvelocity
         collisions = self.collision()
