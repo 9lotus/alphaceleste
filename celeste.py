@@ -589,11 +589,11 @@ class CelesteEnvironment:
                 if self.lockedmovement[0]:
                     if self.lockedmovement[1] == "RIGHT":
                         self.maddy_xvelocity = maxv_x
-                        if self.movingleft:
+                        if self.movingleft and self.walljump_pos == self.maddy_pos[0]:
                             self.walljump_distance = walljumpextend_max
                     elif self.lockedmovement[1] == "LEFT":
                         self.maddy_xvelocity = -maxv_x
-                        if self.movingright:
+                        if self.movingright and self.walljump_pos == self.maddy_pos[0]:
                             self.walljump_distance = walljumpextend_max
                 elif self.movingright:
                     self.maddy_xvelocity = maxv_x
