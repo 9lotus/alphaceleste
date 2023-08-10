@@ -14,6 +14,7 @@ from pygame import *
 #yaml configs
 with open("./config/game_parameters.yaml", 'r') as stream:
     out = yaml.safe_load(stream)
+agent_config = out['agent']
 screen_config = out['screen']
 font_config = out['font']
 framerate_config = out['framerate']
@@ -180,7 +181,6 @@ class CelesteEnvironment:
         self.crystalrects = []
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
         
-
     #Updates game
     def step(self, action):
         self.maddy_update(action)
@@ -188,23 +188,41 @@ class CelesteEnvironment:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                  return True
-            if event.type == KEYDOWN:
-                if event.key == K_c:
+            if agent_config[0] == "HUMAN":
+                if event.type == KEYDOWN:
+                    if event.key == K_c:
+                        self.jump()
+                    if event.key == K_x:
+                        self.dashcountdown = True
+                    if event.key == K_RIGHT:
+                        self.movingright = True
+                    if event.key == K_LEFT:
+                        self.movingleft = True
+                if event.type == KEYUP:
+                    if event.key == K_RIGHT:
+                        self.isfacing = "RIGHT"
+                        self.movingright = False
+                    if event.key == K_LEFT:
+                        self.isfacing = "LEFT"
+                        self.movingleft = False
+                    if event.key == K_z:
+                        self.isgrabbing = False 
+            elif agent_config[0] == "AI":
+                if 'c' in action:
                     self.jump()
-                if event.key == K_x:
+                if 'x' in action:
                     self.dashcountdown = True
-                if event.key == K_RIGHT:
+                if 'right' in action:
                     self.movingright = True
-                if event.key == K_LEFT:
+                if 'left' in action:
                     self.movingleft = True
-            if event.type == KEYUP:
-                if event.key == K_RIGHT:
+                if 'right' not in action:
                     self.isfacing = "RIGHT"
                     self.movingright = False
-                if event.key == K_LEFT:
+                if 'left' not in action:
                     self.isfacing = "LEFT"
                     self.movingleft = False
-                if event.key == K_z:
+                if 'z' not in action:
                     self.isgrabbing = False 
         self.dt = self.clock.tick_busy_loop(fps) / 1000
         self.timer = (pygame.time.get_ticks() / 1000) - self.timeoffset
@@ -592,29 +610,55 @@ class CelesteEnvironment:
 
     #Climbing movement
     def move_climb(self, action):
-        if action[pygame.K_z]:
-            if self.cangrab:
-                if self.collisiontypes['LEFT'] or self.collisiontypes['RIGHT']:
-                    self.isgrabbing = True
-                else:
-                    self.isgrabbing = False
-                    if self.istired:
-                        self.cangrab = False
-        if self.isgrabbing:
-            if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
-                if action[pygame.K_UP]:
-                    self.maddy_yvelocity = climbingup_v
-                    self.isclimbingup = True
-                elif action[pygame.K_DOWN]:
-                    self.maddy_yvelocity = climbingdown_v
-                    self.isclimbingup = False
+        if agent_config[0] == "HUMAN":
+            if action[pygame.K_z]:
+                if self.cangrab:
+                    if self.collisiontypes['LEFT'] or self.collisiontypes['RIGHT']:
+                        self.isgrabbing = True
+                    else:
+                        self.isgrabbing = False
+                        if self.istired:
+                            self.cangrab = False
+            if self.isgrabbing:
+                if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
+                    if action[pygame.K_UP]:
+                        self.maddy_yvelocity = climbingup_v
+                        self.isclimbingup = True
+                    elif action[pygame.K_DOWN]:
+                        self.maddy_yvelocity = climbingdown_v
+                        self.isclimbingup = False
+                    else:
+                        self.maddy_yvelocity = 0
+                        self.isclimbingup = False
                 else:
                     self.maddy_yvelocity = 0
-                    self.isclimbingup = False
             else:
-                self.maddy_yvelocity = 0
-        else:
-            self.isclimbingup = False
+                self.isclimbingup = False
+        elif agent_config[0] == "AI":
+            if 'z' in action:
+                if self.cangrab:
+                    if self.collisiontypes['LEFT'] or self.collisiontypes['RIGHT']:
+                        self.isgrabbing = True
+                    else:
+                        self.isgrabbing = False
+                        if self.istired:
+                            self.cangrab = False
+            if self.isgrabbing:
+                if not('up' in action and 'down' in action):
+                    if 'up' in action:
+                        self.maddy_yvelocity = climbingup_v
+                        self.isclimbingup = True
+                    elif 'down' in action:
+                        self.maddy_yvelocity = climbingdown_v
+                        self.isclimbingup = False
+                    else:
+                        self.maddy_yvelocity = 0
+                        self.isclimbingup = False
+                else:
+                    self.maddy_yvelocity = 0
+            else:
+                self.isclimbingup = False
+
 
     #Moving left/right
     def move_leftright(self):
@@ -641,25 +685,44 @@ class CelesteEnvironment:
 
     #Looking up/down
     def move_look(self, action):
-        if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
-            if action[pygame.K_UP]:
-                self.islooking = "UP"
-            elif action[pygame.K_DOWN]:
-                self.islooking = "DOWN"
-            else:
-                self.islooking = "False"
+        if agent_config[0] == "HUMAN":
+            if not(action[pygame.K_UP] and action[pygame.K_DOWN]):
+                if action[pygame.K_UP]:
+                    self.islooking = "UP"
+                elif action[pygame.K_DOWN]:
+                    self.islooking = "DOWN"
+                else:
+                    self.islooking = "False"
+        elif agent_config[1] == "AI":
+            if not('up' in action and 'down' in action):
+                if 'up' in action:
+                    self.islooking = "UP"
+                elif 'down' in action:
+                    self.islooking = "DOWN"
+                else:
+                    self.islooking = "False" 
 
     #Dashing movement
     def move_dash(self, action):
         directions = []
-        if action[pygame.K_RIGHT]:
-            directions.append("RIGHT")
-        if action[pygame.K_LEFT]:
-            directions.append("LEFT")
-        if action[pygame.K_UP]:
-            directions.append("UP")
-        if action[pygame.K_DOWN]:
-            directions.append("DOWN")
+        if agent_config[0] == "HUMAN":
+            if action[pygame.K_RIGHT]:
+                directions.append("RIGHT")
+            if action[pygame.K_LEFT]:
+                directions.append("LEFT")
+            if action[pygame.K_UP]:
+                directions.append("UP")
+            if action[pygame.K_DOWN]:
+                directions.append("DOWN")
+        elif agent_config[0] == "AI":
+            if 'right' in action:
+                directions.append("RIGHT")
+            if 'left' in action:
+                directions.append("LEFT")
+            if 'up' in action:
+                directions.append("UP")
+            if 'down' in action:
+                directions.append("DOWN")
         self.dash_direction(directions)
 
     #Adds the best time to a text file
