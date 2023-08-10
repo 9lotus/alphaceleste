@@ -3,11 +3,27 @@ from gymnasium import spaces
 import numpy as np
 from celeste import CelesteEnvironment
 import math as mth
+import yaml
 
-level_endpos = (312,69)
-level_startpos = (16, 156)
-screen_height = 180
-screen_width = 320
+#yaml configs
+with open("./config/game_parameters.yaml", 'r') as stream:
+    out = yaml.safe_load(stream)
+screen_config = out['screen']
+font_config = out['font']
+framerate_config = out['framerate']
+movement_config = out['movement']
+gravity_config = out['gravity']
+jumping_config = out['jumping']
+climbing_config = out['climbing']
+dashing_config = out['dashing']
+crystal_config = out['crystal']
+level_config = out['level']
+
+level_startpos = level_config[0]
+level_endpos = level_config[1]
+screen_width = screen_config[1][0]
+screen_height = screen_config[1][1]
+print(screen_width)
 
 class CelesteGymEnv(gym.Env):
     def __init__(self):
