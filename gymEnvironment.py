@@ -19,7 +19,7 @@ class CelesteGymEnv(gym.Env):
                 'maddy_y': spaces.Box(low=0, high=screen_height, shape=(1,), dtype = np.uint8),
                 'maddy_x_velocity': spaces.Box(low=0, high=1.5, shape=(1,), dtype = float),
                 'maddy_y_velocity': spaces.Box(low= 0, high=3.4, shape=(1,), dtype = float),
-                'dist2goal': spaces.Box(low=0, high=(mth.sqrt((self.screen_width **2)+ (self.screen_height **2))), shape = (1,), dtype = float)
+                'dist2goal': spaces.Box(low=0, high=(mth.sqrt((screen_width **2)+ (screen_height **2))), shape = (1,), dtype = float)
             }
         )
         self.done = False
