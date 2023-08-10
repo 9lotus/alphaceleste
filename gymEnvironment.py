@@ -12,7 +12,7 @@ screen_width = 320
 class CelesteGymEnv(gym.Env):
     def __init__(self):
         self.env = CelesteEnvironment()
-        self.action_space = gym.spaces.Discrete(8)  # Actions: 0 to 7
+        self.action_space = gym.spaces.Discrete(8)  # Actions: 0 to 7 -- Zenia implements
         self.observation_space = spaces.Dict(
             {
                 'maddy_x': spaces.Box(low=0, high=screen_width, shape=(1,), dtype = np.uint8),
@@ -30,7 +30,7 @@ class CelesteGymEnv(gym.Env):
         obs, _, done, _ = self.env.step(action)
         agent_pos = self.env.maddy_pos
         distance_to_end = mth.sqrt((self.endpos[0] - agent_pos[0])**2 + (self.endpos[1] - agent_pos[1])**2)
-        reward = 1.0 / (1.0 + distance_to_end)  # Higher reward for being closer to endpos
+        reward = 1.0 / (1.0 + distance_to_end)  # Higher reward for being closer to endpos -- Rori implements "checkpoints"
 
         self.done = self.env.maddy_pos[0] >= self.endpos[0]  # Check if the agent has reached the endpos
 
