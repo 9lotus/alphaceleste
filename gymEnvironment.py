@@ -16,6 +16,12 @@ level_endpos = (312,69)
 level_startpos = (16, 156)
 screen_height = 180
 screen_width = 320
+checkpoint_1 = [58, 72, 132, True]
+checkpoint_2 = [46, 60, 76, True]
+checkpoint_3 = [24, 38, 36, True]
+checkpoint_4 = [128, 152, 55, True]
+checkpoint_5 = [216, 224, 84, True]
+checkpointslist = [checkpoint_1, checkpoint_2, checkpoint_3, checkpoint_4, checkpoint_5]
 
 class CelesteGymEnv(gym.Env):
     def __init__(self):
@@ -54,9 +60,16 @@ class CelesteGymEnv(gym.Env):
     def step(self, action): 
         obs, _, done, _ = self.env.step(action)
         agent_pos = self.env.maddy_pos
+        death_status = self.env.isdead
         distance_to_end = mth.sqrt((self.endpos[0] - agent_pos[0])**2 + (self.endpos[1] - agent_pos[1])**2)
-        reward = 1.0 / (1.0 + distance_to_end)  # Higher reward for being closer to endpos -- Rori implements "checkpoints"
-
+        reward = 1.0 / (1.0 + distance_to_end / 10)  # Higher reward for being closer to endpos
+        for point in checkpointslist:
+            if point[3]: # If checkpoint hasn't been reached yet
+                if agent_pos[0] >= point[0] and agent_pos[0] <= point[1] and agent_pos[1] >= point[2]: #If player pos is within the checkpoint's range
+                    point[3] = False
+                    reward += 0.25
+        if death_status == True:
+            reward -= 0.1
         self.done = self.env.maddy_pos[0] >= self.endpos[0]  # Check if the agent has reached the endpos
 
         #Converting action index to actions
@@ -65,7 +78,7 @@ class CelesteGymEnv(gym.Env):
         else:
             chosen_action = self.combinations[action - len(self.actions)]
 
-        return obs, reward, done, {}
+        return obs, reward, done, False, {}
 
     def reset(self):
         obs = self.env.reset()

@@ -183,6 +183,8 @@ class CelesteEnvironment:
         
     #Updates game
     def step(self, action):
+        if self.isdead:
+            self.ondeath()
         self.maddy_update(action)
         self.get_playeraction(action)
         for event in pygame.event.get():
@@ -239,8 +241,6 @@ class CelesteEnvironment:
         self.update_stamina()
         self.update_crystal()
         self.check_reachedgoal()
-        if self.isdead:
-            self.ondeath()
 
     #Checks if Madeline reached the goal
     def check_reachedgoal(self):

@@ -34,10 +34,10 @@ if agent_config[0] == "HUMAN":
     # if human playing, this loop
     done = False
     while not done:
-        action = Celeste.get_playerinput()
-        done = Celeste.step(action)
-        Celeste.render()
-    Celeste.close()
+        action = CelestePlayer.get_playerinput()
+        done = CelestePlayer.step(action)
+        CelestePlayer.render()
+    CelestePlayer.close()
 elif agent_config[0] == "AI":
     # if ai playing, this loop
     done = False
