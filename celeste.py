@@ -232,7 +232,7 @@ class CelesteEnvironment:
         if agent_config[0] == "HUMAN":
             return False
         elif agent_config[0] == "AI":
-            observations = self.get_obs()
+            observations = self._get_obs()
             return observations, 0, False, {}
             
     #Updates Madeline's position
@@ -802,10 +802,10 @@ class CelesteEnvironment:
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
  
         if agent_config[0] == "AI":
-            return self.get_obs()
+            return self._get_obs()
 
     #Gets observation
-    def get_obs(self):
+    def _get_obs(self):
         return {
             'maddy_x': np.array([self.maddy_pos[0]]),
             'maddy_y': np.array([self.maddy_pos[1]]),

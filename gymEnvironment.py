@@ -24,7 +24,7 @@ checkpoint_5 = [216, 224, 84, True]
 checkpointslist = [checkpoint_1, checkpoint_2, checkpoint_3, checkpoint_4, checkpoint_5]
 
 class CelesteGymEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, render_mode="human"):
         self.env = CelesteEnvironment()
         
         #Defining individual actions
@@ -53,6 +53,7 @@ class CelesteGymEnv(gym.Env):
                 'dist2goal': spaces.Box(low=0, high=(mth.sqrt((screen_width **2)+ (screen_height **2))), shape = (1,), dtype = float)
             }
         )
+        self.render_mode = render_mode
         self.done = False
         self.startpos = level_startpos
         self.endpos = level_endpos
@@ -77,6 +78,8 @@ class CelesteGymEnv(gym.Env):
             chosen_action = self.actions[action]
         else:
             chosen_action = self.combinations[action - len(self.actions)]
+
+        if self.render_mode == "human": self.render()
 
         return obs, reward, done, False, {}
 
