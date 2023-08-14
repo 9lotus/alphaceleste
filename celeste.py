@@ -229,10 +229,11 @@ class CelesteEnvironment:
                     self.isgrabbing = False 
         self.dt = self.clock.tick_busy_loop(fps) / 1000
         self.timer = (pygame.time.get_ticks() / 1000) - self.timeoffset
-        if agent_config == "HUMAN":
+        if agent_config[0] == "HUMAN":
             return False
-        elif agent_config == "AI":
-            return self.get_obs, 0, False, {}
+        elif agent_config[0] == "AI":
+            observations = self.get_obs()
+            return observations, 0, False, {}
             
     #Updates Madeline's position
     def maddy_update(self, action):
