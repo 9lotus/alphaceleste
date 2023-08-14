@@ -46,8 +46,8 @@ class CelesteGymEnv(gym.Env):
 
         self.observation_space = spaces.Dict(
             {
-                'maddy_x': spaces.Box(low=0, high=screen_width, shape=(1,), dtype = np.uint8),
-                'maddy_y': spaces.Box(low=0, high=screen_height, shape=(1,), dtype = np.uint8),
+                'maddy_x': spaces.Box(low=0, high=screen_width, shape=(1,), dtype = float),
+                'maddy_y': spaces.Box(low=0, high=screen_height, shape=(1,), dtype = float),
                 'maddy_x_velocity': spaces.Box(low=0, high=1.5, shape=(1,), dtype = float),
                 'maddy_y_velocity': spaces.Box(low= 0, high=3.4, shape=(1,), dtype = float),
                 'dist2goal': spaces.Box(low=0, high=(mth.sqrt((screen_width **2)+ (screen_height **2))), shape = (1,), dtype = float)
@@ -80,10 +80,10 @@ class CelesteGymEnv(gym.Env):
 
         return obs, reward, done, False, {}
 
-    def reset(self):
+    def reset(self, seed=None):
         obs = self.env.reset()
         self.done = False
-        return obs
+        return obs, {}
 
     def render(self, mode='human'):
         self.env.render()

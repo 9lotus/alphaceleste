@@ -8,6 +8,7 @@ Description : Contains the CelesteEnvironment class and all of its functionality
 
 import math as mth
 import yaml
+import numpy as np
 import pygame, sys
 from pygame import *
 
@@ -210,21 +211,21 @@ class CelesteEnvironment:
                     if event.key == K_z:
                         self.isgrabbing = False 
             elif agent_config[0] == "AI":
-                if 'c' in action:
+                if action == 4 or action == 5 or action == 6:
                     self.jump()
-                if 'x' in action:
+                if action == 3 or action == 7 or action == 8 or action == 9 or action == 10 or action == 13 or action == 14 or action == 15 or action == 16:
                     self.dashcountdown = True
-                if 'right' in action:
+                if action == 1 or action == 6 or action == 8 or action == 14 or action == 16:
                     self.movingright = True
-                if 'left' in action:
-                    self.movingleft = True
-                if 'right' not in action:
+                else:
                     self.isfacing = "RIGHT"
                     self.movingright = False
-                if 'left' not in action:
+                if action == 0 or action == 5 or action == 7 or action == 13 or action == 15:
+                    self.movingleft = True
+                else:
                     self.isfacing = "LEFT"
                     self.movingleft = False
-                if 'z' not in action:
+                if action != 2 and action != 11 and action != 12:
                     self.isgrabbing = False 
         self.dt = self.clock.tick_busy_loop(fps) / 1000
         self.timer = (pygame.time.get_ticks() / 1000) - self.timeoffset
@@ -635,7 +636,7 @@ class CelesteEnvironment:
             else:
                 self.isclimbingup = False
         elif agent_config[0] == "AI":
-            if 'z' in action:
+            if action == 2 or action == 11 or action == 12:
                 if self.cangrab:
                     if self.collisiontypes['LEFT'] or self.collisiontypes['RIGHT']:
                         self.isgrabbing = True
@@ -644,18 +645,15 @@ class CelesteEnvironment:
                         if self.istired:
                             self.cangrab = False
             if self.isgrabbing:
-                if not('up' in action and 'down' in action):
-                    if 'up' in action:
-                        self.maddy_yvelocity = climbingup_v
-                        self.isclimbingup = True
-                    elif 'down' in action:
-                        self.maddy_yvelocity = climbingdown_v
-                        self.isclimbingup = False
-                    else:
-                        self.maddy_yvelocity = 0
-                        self.isclimbingup = False
+                if action == 11:
+                    self.maddy_yvelocity = climbingup_v
+                    self.isclimbingup = True
+                elif action == 12:
+                    self.maddy_yvelocity = climbingdown_v
+                    self.isclimbingup = False
                 else:
                     self.maddy_yvelocity = 0
+                    self.isclimbingup = False
             else:
                 self.isclimbingup = False
 
@@ -693,14 +691,13 @@ class CelesteEnvironment:
                     self.islooking = "DOWN"
                 else:
                     self.islooking = "False"
-        elif agent_config[1] == "AI":
-            if not('up' in action and 'down' in action):
-                if 'up' in action:
-                    self.islooking = "UP"
-                elif 'down' in action:
-                    self.islooking = "DOWN"
-                else:
-                    self.islooking = "False" 
+        elif agent_config[0] == "AI":
+            if action == 9 or action == 11 or action == 13 or action == 14:
+                self.islooking = "UP"
+            elif action == 10 or action == 12 or action == 15 or action == 16:
+                self.islooking = "DOWN"
+            else:
+                self.islooking = "False" 
 
     #Dashing movement
     def move_dash(self, action):
@@ -715,13 +712,13 @@ class CelesteEnvironment:
             if action[pygame.K_DOWN]:
                 directions.append("DOWN")
         elif agent_config[0] == "AI":
-            if 'right' in action:
+            if action == 1 or action == 6 or action == 8 or action == 14 or action == 16:
                 directions.append("RIGHT")
-            if 'left' in action:
+            if action == 0 or action == 5 or action == 7 or action == 13 or action == 15:
                 directions.append("LEFT")
-            if 'up' in action:
+            if action == 9 or action == 11 or action == 13 or action == 14:
                 directions.append("UP")
-            if 'down' in action:
+            elif action == 10 or action == 12 or action == 15 or action == 16:
                 directions.append("DOWN")
         self.dash_direction(directions)
 
@@ -799,6 +796,15 @@ class CelesteEnvironment:
         self.ledgerects = []
         self.crystalrects = []
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
+
+        if agent_config[0] == "AI":
+            return {
+                'maddy_x': np.array([self.maddy_pos[0]]),
+                'maddy_y': np.array([self.maddy_pos[1]]),
+                'maddy_x_velocity': np.array([self.maddy_xvelocity]),
+                'maddy_y_velocity': np.array([self.maddy_yvelocity]),
+                'dist2goal': np.array([mth.sqrt((level_endpos[0] - self.maddy_pos[0]) ** 2 + (level_endpos[1] - self.maddy_pos[1]) ** 2)])
+            }
 
     #Returns player input
     @staticmethod
