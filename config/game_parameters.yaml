@@ -1,4 +1,4 @@
-agent: ["HUMAN"]
+agent: ["AI"]
 screen: [[640, 360], [320, 180], 'black']
 font: ['Comic Sans MS', 8]
 framerate: [60]
