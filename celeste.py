@@ -728,7 +728,8 @@ class CelesteEnvironment:
 
     #Adds the best time to a text file
     def add_best(self):
-        self.besttime = self.timer
+        if self.timer < self.besttime or self.besttime == 0:
+            self.besttime = self.timer
         f = open('best_time.txt', 'r').read()
         if f.strip() == '' or self.besttime < float(f):
             f = open('best_time.txt', 'w')
