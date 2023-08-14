@@ -19,17 +19,6 @@ from gymEnvironment import CelesteGymEnv
 CelestePlayer = CelesteEnvironment()
 CelesteAI = CelesteGymEnv(render_mode="nothuman")
 
-check_env(CelesteAI)
- # Set up model
-model = sb3.PPO("MultiInputPolicy", CelesteAI, verbose=1, tensorboard_log="./logs/")
-model.learn(total_timesteps=1)
-model.save("alphaceleste")
-
-del model
-# Load and evaluate agent
-model = sb3.PPO.load("alphaceleste")
-obs, _ = CelesteAI.reset()
-
 if agent_config[0] == "HUMAN":
     # if human playing, this loop
     done = False
@@ -39,6 +28,16 @@ if agent_config[0] == "HUMAN":
         CelestePlayer.render()
     CelestePlayer.close()
 elif agent_config[0] == "AI":
+    check_env(CelesteAI)
+    # Set up model
+    model = sb3.PPO("MultiInputPolicy", CelesteAI, verbose=1, tensorboard_log="./logs/")
+    model.learn(total_timesteps=1)
+    model.save("alphaceleste")
+
+    del model
+    # Load and evaluate agent
+    model = sb3.PPO.load("alphaceleste")
+    obs, _ = CelesteAI.reset()
     # if ai playing, this loop
     done = False
     while not done:
