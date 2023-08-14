@@ -229,7 +229,10 @@ class CelesteEnvironment:
                     self.isgrabbing = False 
         self.dt = self.clock.tick_busy_loop(fps) / 1000
         self.timer = (pygame.time.get_ticks() / 1000) - self.timeoffset
-        return False
+        if agent_config == "HUMAN":
+            return False
+        elif agent_config == "AI":
+            return self.return_ai(), 0, False, False
             
     #Updates Madeline's position
     def maddy_update(self, action):
@@ -796,15 +799,19 @@ class CelesteEnvironment:
         self.ledgerects = []
         self.crystalrects = []
         self.collisiontypes = {'TOP': False, 'BOTTOM': False, 'RIGHT': False, 'LEFT': False}
-
+ 
         if agent_config[0] == "AI":
-            return {
-                'maddy_x': np.array([self.maddy_pos[0]]),
-                'maddy_y': np.array([self.maddy_pos[1]]),
-                'maddy_x_velocity': np.array([self.maddy_xvelocity]),
-                'maddy_y_velocity': np.array([self.maddy_yvelocity]),
-                'dist2goal': np.array([mth.sqrt((level_endpos[0] - self.maddy_pos[0]) ** 2 + (level_endpos[1] - self.maddy_pos[1]) ** 2)])
-            }
+            return self.return_ai()
+
+    #Returns dict for AI
+    def return_ai(self):
+        return {
+            'maddy_x': np.array([self.maddy_pos[0]]),
+            'maddy_y': np.array([self.maddy_pos[1]]),
+            'maddy_x_velocity': np.array([self.maddy_xvelocity]),
+            'maddy_y_velocity': np.array([self.maddy_yvelocity]),
+            'dist2goal': np.array([mth.sqrt((level_endpos[0] - self.maddy_pos[0]) ** 2 + (level_endpos[1] - self.maddy_pos[1]) ** 2)])
+        }
 
     #Returns player input
     @staticmethod
