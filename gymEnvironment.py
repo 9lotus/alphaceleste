@@ -12,21 +12,22 @@ import numpy as np
 from celeste import CelesteEnvironment
 import math as mth
 
-level_endpos = (312,69)
-level_startpos = (16, 156)
-screen_height = 180
-screen_width = 320
-checkpoint_1 = [58, 72, 132, True]
-checkpoint_2 = [46, 60, 76, True]
-checkpoint_3 = [24, 38, 36, True]
-checkpoint_4 = [128, 152, 55, True]
-checkpoint_5 = [216, 224, 84, True]
-checkpointslist = [checkpoint_1, checkpoint_2, checkpoint_3, checkpoint_4, checkpoint_5]
-
 class CelesteGymEnv(gym.Env):
     def __init__(self, render_mode="human"):
         self.env = CelesteEnvironment()
-        
+
+        #Vars
+        self.level_endpos = (312,69)
+        self.level_startpos = (16, 156)
+        self.screen_height = 180
+        self.screen_width = 320
+        self.checkpoint_1 = [58, 72, 132, True]
+        self.checkpoint_2 = [46, 60, 76, True]
+        self.checkpoint_3 = [24, 38, 36, True]
+        self.checkpoint_4 = [128, 152, 55, True]
+        self.checkpoint_5 = [216, 224, 84, True]
+        self.checkpointslist = [self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4, self.checkpoint_5]           
+
         #Defining individual actions
         self.actions = ['left', 'right', 'z', 'x', 'c']
 
@@ -46,17 +47,17 @@ class CelesteGymEnv(gym.Env):
 
         self.observation_space = spaces.Dict(
             {
-                'maddy_x': spaces.Box(low=0, high=screen_width, shape=(1,), dtype = float),
-                'maddy_y': spaces.Box(low=0, high=screen_height, shape=(1,), dtype = float),
+                'maddy_x': spaces.Box(low=0, high=self.screen_width, shape=(1,), dtype = float),
+                'maddy_y': spaces.Box(low=0, high=self.screen_height, shape=(1,), dtype = float),
                 'maddy_x_velocity': spaces.Box(low=0, high=1.5, shape=(1,), dtype = float),
                 'maddy_y_velocity': spaces.Box(low= 0, high=3.4, shape=(1,), dtype = float),
-                'dist2goal': spaces.Box(low=0, high=(mth.sqrt((screen_width **2)+ (screen_height **2))), shape = (1,), dtype = float)
+                'dist2goal': spaces.Box(low=0, high=(mth.sqrt((self.screen_width **2)+ (self.screen_height **2))), shape = (1,), dtype = float)
             }
         )
         self.render_mode = render_mode
         self.done = False
-        self.startpos = level_startpos
-        self.endpos = level_endpos
+        self.startpos = self.level_startpos
+        self.endpos = self.level_endpos
 
     def step(self, action): 
         obs, _, done, _ = self.env.step(action)
@@ -64,7 +65,7 @@ class CelesteGymEnv(gym.Env):
         death_status = self.env.isdead
         distance_to_end = mth.sqrt((self.endpos[0] - agent_pos[0])**2 + (self.endpos[1] - agent_pos[1])**2)
         reward = 1.0 / (1.0 + distance_to_end / 10)  # Higher reward for being closer to endpos
-        for point in checkpointslist:
+        for point in self.checkpointslist:
             if point[3]: # If checkpoint hasn't been reached yet
                 if agent_pos[0] >= point[0] and agent_pos[0] <= point[1] and agent_pos[1] >= point[2]: #If player pos is within the checkpoint's range
                     point[3] = False
