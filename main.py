@@ -12,12 +12,13 @@ import yaml
 with open("./config/game_parameters.yaml", 'r') as stream:
     out = yaml.safe_load(stream)
 agent_config = out['agent']
+steps_config = out['steps']
 
 from celeste import CelesteEnvironment
 from gymEnvironment import CelesteGymEnv
 
 CelestePlayer = CelesteEnvironment()
-CelesteAI = CelesteGymEnv(render_mode="nothuman")
+CelesteAI = CelesteGymEnv(render_mode="human")
 
 if agent_config[0] == "HUMAN":
     # if human playing, this loop
@@ -31,7 +32,7 @@ elif agent_config[0] == "AI":
     check_env(CelesteAI)
     # Set up model
     model = sb3.PPO("MultiInputPolicy", CelesteAI, verbose=1, tensorboard_log="./logs/")
-    model.learn(total_timesteps=1)
+    model.learn(total_timesteps=steps_config[0])
     model.save("alphaceleste")
 
     del model
@@ -44,4 +45,6 @@ elif agent_config[0] == "AI":
         action, _ = model.predict(obs)
         obs, reward, done, truncated, info = CelesteAI.step(action)
         CelesteAI.render()
+        if model._total_timesteps >= steps_config[0]:
+            done = True
     CelesteAI.close()
