@@ -30,14 +30,17 @@ if agent_config[0] == "HUMAN":
     CelestePlayer.close()
 elif agent_config[0] == "AI":
     check_env(CelesteAI)
+    """
     # Set up model
     model = sb3.PPO("MultiInputPolicy", CelesteAI, verbose=1, tensorboard_log="./logs/")
     model.learn(total_timesteps=steps_config[0])
     model.save("alphaceleste")
 
     del model
+    """
     # Load and evaluate agent
     model = sb3.PPO.load("alphaceleste")
+    model._total_timesteps = 0
     obs, _ = CelesteAI.reset()
     # if ai playing, this loop
     done = False
